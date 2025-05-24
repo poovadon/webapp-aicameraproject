@@ -1,0 +1,1 @@
+aicamera-service.sh
