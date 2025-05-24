@@ -56,4 +56,57 @@ python manage.py createsuperuser
 ```bash
 python manage.py runserver 0.0.0.0:8000
 ```
+### 8. สร้าง Service สำหรับรัน WebApp
+จะสร้าง shell script เพื่อช่วยให้สามารถรัน Django WebApp ได้ง่ายขึ้นในครั้งเดียว โดยทำตามขั้นตอนด้านล่าง
+#### 8.1 สร้างไฟล์ shell script
+ให้สร้างไฟล์ชื่อ aicamera-service.sh และเขียนคำสั่งต่อไปนี้ลงไปในไฟล์:
+
+```bash
+#!/bin/bash
+cd ../../../..
+# เปลี่ยน directory ไปยัง project directory
+cd path/webapp-aicameraproject/django/cameraproject/
+# เปิด virtual environment
+source venv/bin/activate
+# รัน Django server บน 0.0.0.0:8000 แบบ background
+python3 manage.py  runserver 0.0.0.0:8000 &
+```
+8.2 ตั้งสิทธิ์ให้ shell script สามารถรันได้
+```bash
+chmod +x aicamera-service.sh
+```
+
+8.3 เรียกใช้ script เพื่อเริ่ม server
+หากทำถูกต้อง คุณจะเห็น Django server เริ่มทำงานที่ http://0.0.0.0:8000
+```bash
+./aicamera-service.sh
+```
+### 9. เพิ่มเติม (สำหรับผู้ใช้ขั้นสูง)
+หากคุณต้องการให้ script นี้รันอัตโนมัติหลังจากบูตเครื่อง (Linux server)
+9.1 สร้าง systemd service:
+```bash
+sudo nano /etc/systemd/system/aicamera.service
+```
+9.2 ใส่เนื้อหานี้:
+```bash
+[Unit]
+Description=Run Django AICamera WebApp
+After=network.target
+
+[Service]
+# เปลี่ยน directory ไปยัง project script 
+ExecStart=path/to/webapp-aicameraproject/django/cameraproject/django.sh
+Restart=always
+WorkingDirectory=path/to/webapp-aicameraproject/django/cameraproject
+User=your_user
+Group=your_group
+
+[Install]
+WantedBy=multi-user.target
+```
+9.3 จากนั้น
+sudo systemctl daemon-reexec
+sudo systemctl daemon-reload
+sudo systemctl enable aicamera
+sudo systemctl start aicamera
 
