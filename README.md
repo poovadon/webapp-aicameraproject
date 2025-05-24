@@ -43,22 +43,22 @@ DATABASES = {
     }
 }
 ```
-### 6.ใช้ Django Migrations เพื่อสร้างตารางฐานข้อมูล
+### 6. ใช้ Django Migrations เพื่อสร้างตารางฐานข้อมูล
 ```bash
 python manage.py migrate
 ```
-### 7.สร้าง superuser เพื่อเข้าใช้งาน Django Admin 
+### 7. สร้าง superuser เพื่อเข้าใช้งาน Django Admin 
 ```bash
 python manage.py createsuperuser
 ```
-### 7. รันเซิร์ฟเวอร์
+### 8. รันเซิร์ฟเวอร์
 เปิดเว็บเบราเซอร์ไปที่ URL นี้เพื่อใช้งาน: http://127.0.0.1:8000 หรือ ip setup
 ```bash
 python manage.py runserver 0.0.0.0:8000
 ```
-### 8. สร้าง Service สำหรับรัน WebApp
+### 9. สร้าง Service สำหรับรัน WebApp
 จะสร้าง shell script เพื่อช่วยให้สามารถรัน Django WebApp ได้ง่ายขึ้นในครั้งเดียว โดยทำตามขั้นตอนด้านล่าง
-#### 8.1 สร้างไฟล์ shell script
+9.1 สร้างไฟล์ shell script
 ให้สร้างไฟล์ชื่อ aicamera-service.sh และเขียนคำสั่งต่อไปนี้ลงไปในไฟล์:
 
 ```bash
@@ -71,23 +71,23 @@ source venv/bin/activate
 # รัน Django server บน 0.0.0.0:8000 แบบ background
 python3 manage.py  runserver 0.0.0.0:8000 &
 ```
-8.2 ตั้งสิทธิ์ให้ shell script สามารถรันได้
+9.2 ตั้งสิทธิ์ให้ shell script สามารถรันได้
 ```bash
 chmod +x aicamera-service.sh
 ```
 
-8.3 เรียกใช้ script เพื่อเริ่ม server
+9.3 เรียกใช้ script เพื่อเริ่ม server
 หากทำถูกต้อง คุณจะเห็น Django server เริ่มทำงานที่ http://0.0.0.0:8000
 ```bash
 ./aicamera-service.sh
 ```
-### 9. เพิ่มเติม (สำหรับผู้ใช้ขั้นสูง)
+### 10. เพิ่มเติม
 หากคุณต้องการให้ script นี้รันอัตโนมัติหลังจากบูตเครื่อง (Linux server)
-9.1 สร้าง systemd service:
+10.1 สร้าง systemd service:
 ```bash
 sudo nano /etc/systemd/system/aicamera.service
 ```
-9.2 ใส่เนื้อหานี้:
+10.2 ใส่เนื้อหานี้:
 ```bash
 [Unit]
 Description=Run Django AICamera WebApp
@@ -104,7 +104,7 @@ Group=your_group
 [Install]
 WantedBy=multi-user.target
 ```
-9.3 จากนั้น
+10.3 จากนั้น
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 sudo systemctl enable aicamera
