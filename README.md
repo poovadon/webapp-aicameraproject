@@ -71,23 +71,23 @@ source venv/bin/activate
 # รัน Django server บน 0.0.0.0:8000 แบบ background
 python3 manage.py  runserver 0.0.0.0:8000 &
 ```
-9.2 ตั้งสิทธิ์ให้ shell script สามารถรันได้
+#### 9.2 ตั้งสิทธิ์ให้ shell script สามารถรันได้
 ```bash
 chmod +x aicamera-service.sh
 ```
 
-9.3 เรียกใช้ script เพื่อเริ่ม server
+#### 9.3 เรียกใช้ script เพื่อเริ่ม server
 หากทำถูกต้อง คุณจะเห็น Django server เริ่มทำงานที่ http://0.0.0.0:8000
 ```bash
 ./aicamera-service.sh
 ```
 ### 10. เพิ่มเติม
 หากคุณต้องการให้ script นี้รันอัตโนมัติหลังจากบูตเครื่อง (Linux server)
-10.1 สร้าง systemd service:
+#### 10.1 สร้าง systemd service:
 ```bash
 sudo nano /etc/systemd/system/aicamera.service
 ```
-10.2 ใส่เนื้อหานี้:
+#### 10.2 ใส่เนื้อหานี้:
 ```bash
 [Unit]
 Description=Run Django AICamera WebApp
@@ -104,7 +104,7 @@ Group=your_group
 [Install]
 WantedBy=multi-user.target
 ```
-10.3 จากนั้น
+#### 10.3 จากนั้น
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 sudo systemctl enable aicamera
