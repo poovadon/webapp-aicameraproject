@@ -26,6 +26,7 @@ SECRET_KEY = 'django-insecure-af+fe%*szyfwpt2fg&p%m36r3*qqpr^+_i6k$whxpo#1f2d*87
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+#your ip
 ALLOWED_HOSTS = ['192.168.1.224']
 
 
@@ -95,8 +96,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', 
         'NAME': 'camera_database',
-        'USER': 'amic',
-        'PASSWORD': 'Amic@8836688366',
+        'USER': 'user',
+        'PASSWORD': 'password',
         'HOST': 'localhost',
         'PORT': '3306',
     }
