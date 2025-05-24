@@ -20,7 +20,7 @@ FLUSH PRIVILEGES;
 mysql -u your_mysql_user -p camera_database < camera_database.sql
 ```
 ### 5. ปรับแต่งไฟล์ตั้งค่า Django
-แก้ไขไฟล์ cameraproject/settings.py เพื่อเชื่อมต่อกับฐานข้อมูล MySQL ที่ตั้งค่าไว้
+แก้ไขไฟล์ cameraproject/settings.py เพื่อเชื่อมต่อกับฐานข้อมูล MySQL ที่ตั้งค่าไว้ และตั้งค่า ip
 ```bash
 
 ALLOWED_HOSTS = ['192.168.1.224','ddns.net'] # your_ip adn domain
