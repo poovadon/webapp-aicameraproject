@@ -94,10 +94,10 @@ ASGI_APPLICATION = "cameraproject.routing.application"
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql', 
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'camera_database',
-        'USER': 'amic',
-        'PASSWORD': 'Amic@8836688366',
+        'USER': 'your_mysql_user',
+        'PASSWORD': 'your_password',
         'HOST': 'localhost',
         'PORT': '3306',
     }
