@@ -105,8 +105,9 @@ Group=your_group
 WantedBy=multi-user.target
 ```
 #### 10.3 จากนั้น
+```bash
 sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 sudo systemctl enable aicamera
 sudo systemctl start aicamera
-
+```
