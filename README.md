@@ -19,7 +19,7 @@ FLUSH PRIVILEGES;
 ```bash
 mysql -u your_mysql_user -p camera_database < camera_database.sql
 ```
-### 5.ปรับแต่งไฟล์ตั้งค่า Django
+### 5. ปรับแต่งไฟล์ตั้งค่า Django
 แก้ไขไฟล์ cameraproject/settings.py เพื่อเชื่อมต่อกับฐานข้อมูล MySQL ที่ตั้งค่าไว้
 ```bash
 DATABASES = {
@@ -37,11 +37,12 @@ DATABASES = {
 ```bash
 python manage.py migrate
 ```
-### 7. สร้าง superuser เพื่อเข้าใช้งาน Django Admin 
+### 7.สร้าง superuser เพื่อเข้าใช้งาน Django Admin 
 ```bash
 python manage.py createsuperuser
 ```
-### 7.รันเซิร์ฟเวอร์ เปิดเว็บเบราเซอร์ไปที่ URL นี้เพื่อใช้งาน: http://127.0.0.1:8000 หรือ ip setup
+### 7. รันเซิร์ฟเวอร์
+เปิดเว็บเบราเซอร์ไปที่ URL นี้เพื่อใช้งาน: http://127.0.0.1:8000 หรือ ip setup
 ```bash
 python manage.py runserver 0.0.0.0:8000
 ```
