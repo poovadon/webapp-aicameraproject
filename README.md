@@ -58,7 +58,7 @@ python manage.py runserver 0.0.0.0:8000
 ```
 ### 9. สร้าง Service สำหรับรัน WebApp
 จะสร้าง shell script เพื่อช่วยให้สามารถรัน Django WebApp ได้ง่ายขึ้นในครั้งเดียว โดยทำตามขั้นตอนด้านล่าง
-9.1 สร้างไฟล์ shell script
+#### 9.1 สร้างไฟล์ shell script
 ให้สร้างไฟล์ชื่อ aicamera-service.sh และเขียนคำสั่งต่อไปนี้ลงไปในไฟล์:
 
 ```bash
