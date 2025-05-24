@@ -22,6 +22,16 @@ mysql -u your_mysql_user -p camera_database < camera_database.sql
 ### 5. ปรับแต่งไฟล์ตั้งค่า Django
 แก้ไขไฟล์ cameraproject/settings.py เพื่อเชื่อมต่อกับฐานข้อมูล MySQL ที่ตั้งค่าไว้
 ```bash
+
+ALLOWED_HOSTS = ['192.168.1.224','ddns.net'] # your_ip adn domain
+
+INTERNAL_IPS = [
+    # ...
+    '127.0.0.1',
+    '192.168.1.224', # your_ip
+    'ddns.net', # your_domain
+    # ...
+]
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
