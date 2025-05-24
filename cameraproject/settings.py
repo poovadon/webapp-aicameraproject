@@ -96,8 +96,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql', 
         'NAME': 'camera_database',
-        'USER': 'user',
-        'PASSWORD': 'password',
+        'USER': 'amic',
+        'PASSWORD': 'Amic@8836688366',
         'HOST': 'localhost',
         'PORT': '3306',
     }
