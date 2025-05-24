@@ -1,0 +1,173 @@
+{% extends "base.html" %}{% load static %}
+
+{% block title %}
+    <title>Checkpoint Vehicle Data</title>
+{% endblock %}
+
+{% block content %}
+<style>
+div.dt-container .dt-paging .dt-paging-button:hover {
+  border: 1px solid #fff;
+  background: linear-gradient(to bottom, #fff 0%, #fff 100%);
+}
+</style>
+<body onload="activeShowPage()">
+    <div class="lds-dual-ring" id="preLoader"></div>
+    <div id="pageContent" class="content fadecontent">
+            <div class="container-fluid px-4">
+                <h1 class="mt-4">Checkpoint Vehicle Data</h1>
+                <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'home' %}">home</a>
+                </li>
+                <li class="breadcrumb-item active">Checkpoint Vehicle Data</li>
+                </ol>
+                <div class="card shadow mb-4">
+                <br>
+                <form method="get" class="form-inline mb-4 p-3 border rounded" style="background-color: #f8f9fa;">
+                    <div class="form-group mr-3">
+                        <label for="checkpoint" class="mr-2">จุดตรวจ:</label>
+                        <input type="text" name="checkpoint" id="checkpoint" class="form-control" placeholder="1" style="width: 100px;">
+                    </div>
+                
+                    <div class="form-group mr-3">
+                        <label for="start_datetime" class="mr-2">เวลาบันทึกภาพ:</label>
+                        <input type="datetime-local" name="start_datetime" id="start_datetime" class="form-control" style="width: 220px;">
+                    </div>
+                
+                    <div class="form-group mr-3">
+                        <span class="mr-2">-</span>
+                        <input type="datetime-local" name="end_datetime" id="end_datetime" class="form-control" style="width: 220px;">
+                    </div>
+                
+                    <div class="form-group mr-3">
+                        <label for="id_plate_part1" class="mr-2">ทะเบียนรถ:</label>
+                        <input type="text" name="plate_part1" id="id_plate_part1" class="form-control" placeholder="ศว" style="width: 60px;">
+                        <span class="mr-2">-</span>
+                        <input type="text" name="plate_part2" id="id_plate_part2" class="form-control" placeholder="4652" style="width: 80px;">
+                        <span class="mr-2">-</span>
+                        <input type="text" name="plate_part3" id="id_plate_part3" class="form-control" placeholder="ตาก" style="width: 60px;">
+                    </div>
+                
+                    <button type="submit" class="btn btn-primary ml-3">ค้นหา</button>
+                </form>
+                
+
+                <!-- ตารางแสดงข้อมูลการค้นหา -->
+                {% if camera_data %}
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <h2 class="text-center mb-4">ผลการค้นหาข้อมูล</h2>
+                        <div class="table-responsive mx-auto">
+                            <table id="cameraDataTable" class="table table-bordered table-hover table-striped">
+                                <thead style="background-color: #add8e6;">
+                                    <tr>
+                                        <th>ลำดับ</th>
+                                        <th>หมายเลขทะเบียน</th>
+                                        <th>ด่าน</th>
+                                        <th>วันเวลา</th>
+                                        <th>ประเภท</th>
+                                        <th>สี</th>
+                                        <th>ละติจูด</th>
+                                        <th>ลองจิจูด</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry in camera_data %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ entry.license_plate }}</td>
+                                        <td>{{ entry.checkpoint_id }}</td>
+                                        <td>{{ entry.timestamp }}</td>
+                                        <td>{{ entry.vehicle_type }}</td>
+                                        <td>{{ entry.vehicle_color }}</td>
+                                        <td>{{ entry.latitude }}</td>
+                                        <td>{{ entry.longitude }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ตารางแสดงข้อมูล conflict -->
+                {% if conflicting_results %}
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <h2 class="text-center mb-4">ข้อมูลทะเบียนรถเดียวกัน แต่ข้อมูลประเภทหรือสีไม่ตรงกัน</h2>
+                        <div class="table-responsive mx-auto">
+                            <table id="conflictDataTable" class="table table-bordered table-hover table-striped">
+                                <thead style="background-color: #f98581;">
+                                    <tr>
+                                        <th>ลำดับ</th>
+                                        <th>ทะเบียนรถ</th>
+                                        <th>ประเภท</th>
+                                        <th>สี</th>
+                                        <th>จำนวนการบันทึก</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for conflict in conflicting_results %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ conflict.license_plate }}</td>
+                                        <td>{{ conflict.vehicle_type }}</td>
+                                        <td>{{ conflict.vehicle_color }}</td>
+                                        <td>{{ conflict.count }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+    </div>
+    <script>
+            $(document).ready(function() {
+                // เปิดใช้งาน DataTables สำหรับตารางที่มี ID cameraDataTable
+                $('#cameraDataTable').DataTable({
+                    "paging": true,  
+                    "searching": true,
+                    "info": true,  
+                    "lengthChange": true, 
+                    "ordering": true,  
+                    "language": {
+                        "search": "ค้นหา:",
+                        "lengthMenu": "แสดง _MENU_ รายการต่อหน้า",
+                        "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+                        "paginate": {
+                            "first": "<<",
+                            "last": ">>",
+                            "next": ">",
+                            "previous": "<"
+                        }
+                    }
+                });
+
+                // เปิดใช้งาน DataTables สำหรับตารางที่มี ID conflictDataTable
+                $('#conflictDataTable').DataTable({
+                    "paging": true,
+                    "searching": true,
+                    "info": true,
+                    "lengthChange": true,
+                    "ordering": true,
+                    "language": {
+                        "search": "ค้นหา:",
+                        "lengthMenu": "แสดง _MENU_ รายการต่อหน้า",
+                        "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+                        "paginate": {
+                            "first": "<<",
+                            "last": ">>",
+                            "next": ">",
+                            "previous": "<"
+                        }
+                    }
+                });
+            });
+        </script>
+</body>            
+{% endblock %}

@@ -1,0 +1,309 @@
+{% extends "base.html" %}{% load static %}
+
+{% block title %}
+    <title>Checkpoint Vehicle Data</title>
+{% endblock %}
+
+{% block content %}
+<style>
+div.dt-container .dt-paging .dt-paging-button:hover {
+  border: 1px solid #fff;
+  background: linear-gradient(to bottom, #fff 0%, #fff 100%);
+}
+</style>
+<body onload="activeShowPage()">
+    <div class="lds-dual-ring" id="preLoader"></div>
+    <div id="pageContent" class="content fadecontent">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">Checkpoint Vehicle Data</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">home</a></li>
+                <li class="breadcrumb-item active">Checkpoint Vehicle Data</li>
+            </ol>
+            <div class="card shadow mb-4">
+                <br>
+                <!-- Form สำหรับค้นหาข้อมูล -->
+                <form id="searchForm" class="form-inline mb-4 p-3 border rounded" style="background-color: #f8f9fa;">
+                    <div class="form-group mr-3">
+                        <label for="checkpoint" class="mr-2">จุดตรวจ:</label>
+                        <input type="text" name="checkpoint" id="searchCheckpoint" class="form-control" placeholder="1" style="width: 100px;">
+                    </div>
+                    <div class="form-group mr-3">
+                        <label for="start_datetime" class="mr-2">เวลาบันทึกภาพ:</label>
+                        <input type="datetime-local" name="start_datetime" id="searchStartDatetime" class="form-control" style="width: 220px;">
+                    </div>
+                    <div class="form-group mr-3">
+                        <span class="mr-2">-</span>
+                        <input type="datetime-local" name="end_datetime" id="searchEndDatetime" class="form-control" style="width: 220px;">
+                    </div>
+                    <div class="form-group mr-3">
+                        <label for="plate_part1" class="mr-2">ทะเบียนรถ:</label>
+                        <input type="text" name="plate_part1" id="searchPlatePart1" class="form-control" placeholder="ศว" style="width: 60px;">
+                        <span class="mr-2">-</span>
+                        <input type="text" name="plate_part2" id="searchPlatePart2" class="form-control" placeholder="4652" style="width: 80px;">
+                        <span class="mr-2">-</span>
+                        <input type="text" name="plate_part3" id="searchPlatePart3" class="form-control" placeholder="ตาก" style="width: 60px;">
+                    </div>
+                    <button type="button" class="btn btn-primary ml-3">ค้นหา</button>
+                </form>
+            
+                <!-- ตารางแสดงผลการค้นหา -->
+                <div class="card-body">
+                    <h2 class="text-center mb-4">ผลการค้นหาข้อมูล</h2>
+                    <div class="table-responsive mx-auto">
+                        <table id="cameraDataTable" class="table table-bordered table-hover table-striped">
+                            <thead style="background-color: #add8e6;">
+                                <tr>
+                                    <th>ลำดับ</th>
+                                    <th>หมายเลขทะเบียน</th>
+                                    <th>ด่าน</th>
+                                    <th>วันเวลา</th>
+                                    <th>ประเภท</th>
+                                    <th>สี</th>
+                                    <th>ละติจูด</th>
+                                    <th>ลองจิจูด</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cameraDataBody">
+                                <!-- ข้อมูลจะถูกเพิ่มที่นี่ -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            
+                <!-- ตารางแสดงข้อมูล conflict -->
+                <div class="card-body">
+                    <h2 class="text-center mb-4">ข้อมูลทะเบียนรถเดียวกัน แต่ข้อมูลประเภทหรือสีไม่ตรงกัน</h2>
+                    <div class="table-responsive mx-auto">
+                        <table id="conflictDataTable" class="table table-bordered table-hover table-striped">
+                            <thead style="background-color: #f98581;">
+                                <tr>
+                                    <th>ลำดับ</th>
+                                    <th>ทะเบียนรถ</th>
+                                    <th>ประเภท</th>
+                                    <th>สี</th>
+                                    <th>จำนวนการบันทึก</th>
+                                </tr>
+                            </thead>
+                            <tbody id="conflictDataBody">
+                                <!-- ข้อมูลจะถูกเพิ่มที่นี่ -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+            
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded and parsed");
+            
+            function formatDateTime(isoString) {
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) {
+                    return 'ไม่ระบุวันที่';
+                }
+        
+                // ตัวอย่าง: 29-ก.ย.-2567 01:59:00
+                const optionsDate = { day: '2-digit', month: 'short', year: 'numeric' };
+                let formattedDate = date.toLocaleDateString('th-TH', optionsDate);
+        
+                // แทนที่ช่องว่างด้วยขีดกลางเพื่อให้ได้รูปแบบ 29-ก.ย.-2567
+                formattedDate = formattedDate.replace(/\s/g, '-');
+        
+                // แปลงปี ค.ศ. เป็น พ.ศ. (บวก 543 ปี)
+                const year = date.getFullYear() + 543;
+                formattedDate = formattedDate.replace(/(\d{2})-(\S{2,3})-(\d{4})/, `$1-$2-${year}`);
+        
+                // เพิ่มเวลาในรูปแบบ hh:mm:ss
+                const optionsTime = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+                const formattedTime = date.toLocaleTimeString('th-TH', optionsTime);
+        
+                return `${formattedDate} ${formattedTime}`;
+            }
+            // เริ่มต้น DataTable สำหรับตารางกล้อง
+            var cameraTable = $('#cameraDataTable').DataTable({
+                "paging": true,  
+                "searching": true,
+                "info": true,  
+                "lengthChange": true, 
+                "lengthMenu": [10, 25, 50, 100],
+                "ordering": true,  
+                "language": {
+                    "search": "ค้นหา:",
+                    "lengthMenu": "แสดง _MENU_ รายการต่อหน้า",
+                    "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+                    "paginate": {
+                        "first": "<<",
+                        "last": ">>",
+                        "next": ">",
+                        "previous": "<"
+                    }
+                },
+                "data": [], // เริ่มต้นด้วยข้อมูลว่าง
+                "columns": [
+                    { "data": "index" },
+                    { "data": "license_plate" },
+                    { "data": "checkpoint_id" },
+                    { 
+                        "data": "timestamp",
+                        "render": function(data, type, row) {
+                            if (type === 'display' || type === 'filter') {
+                                return formatDateTime(data);
+                            }
+                            return data;
+                        }
+                    },
+                    { "data": "vehicle_type" },
+                    { "data": "vehicle_color" },
+                    { "data": "latitude" },
+                    { "data": "longitude" }
+                ]
+            });
+        
+            // เริ่มต้น DataTable สำหรับตาราง conflict
+            var conflictTable = $('#conflictDataTable').DataTable({
+                "paging": true,
+                "searching": true,
+                "info": true,
+                "lengthChange": true,
+                "lengthMenu": [10, 25, 50, 100],
+                "ordering": true,
+                "language": {
+                    "search": "ค้นหา:",
+                    "lengthMenu": "แสดง _MENU_ รายการต่อหน้า",
+                    "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+                    "paginate": {
+                        "first": "<<",
+                        "last": ">>",
+                        "next": ">",
+                        "previous": "<"
+                    }
+                },
+                "data": [], // เริ่มต้นด้วยข้อมูลว่าง
+                "columns": [
+                    { "data": "index" },
+                    { "data": "licensePlate" },
+                    { "data": "vehicleType" },
+                    { "data": "vehicleColor" },
+                    { "data": "conflictCount" }
+                ]
+            });
+        
+            // ฟังก์ชั่นสำหรับดึงข้อมูลและอัพเดตตาราง
+            function fetchCameraData(event) {
+                if (event) event.preventDefault();
+                console.log("Fetching camera data...");
+        
+                const checkpoint = document.getElementById('searchCheckpoint').value;
+                const startDatetime = document.getElementById('searchStartDatetime').value;
+                const endDatetime = document.getElementById('searchEndDatetime').value;
+                const platePart1 = document.getElementById('searchPlatePart1').value;
+                const platePart2 = document.getElementById('searchPlatePart2').value;
+                const platePart3 = document.getElementById('searchPlatePart3').value;
+        
+                const url = `/api/cameras/?checkpoint=${checkpoint}&start_datetime=${startDatetime}&end_datetime=${endDatetime}&plate_part1=${platePart1}&plate_part2=${platePart2}&plate_part3=${platePart3}`;
+        
+                console.log(`URL: ${url}`);
+        
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log("Data received:", data);
+                        
+                        // จัดกลุ่มข้อมูลตามหมายเลขทะเบียน
+                        const groupedData = {};
+                        data.forEach(entry => {
+                            const licensePlate = entry.license_plate;
+                            if (!groupedData[licensePlate]) {
+                                groupedData[licensePlate] = [];
+                            }
+                            groupedData[licensePlate].push(entry);
+                        });
+        
+                        // เตรียมข้อมูลสำหรับตารางกล้อง
+                        const cameraData = [];
+                        // เตรียมข้อมูลสำหรับตาราง conflict
+                        const conflictData = [];
+                        let globalIndex = 1; // ลำดับสำหรับตารางกล้อง
+        
+                        for (const [licensePlate, entries] of Object.entries(groupedData)) {
+                            // เพิ่มข้อมูลลงในตารางกล้อง
+                            entries.forEach(entry => {
+                                cameraData.push({
+                                    index: globalIndex++,
+                                    license_plate: entry.license_plate,
+                                    checkpoint_id: entry.checkpoint_id,
+                                    timestamp: entry.timestamp,
+                                    vehicle_type: entry.vehicle_type,
+                                    vehicle_color: entry.vehicle_color,
+                                    latitude: entry.latitude,
+                                    longitude: entry.longitude
+                                });
+                            });
+        
+                            // ตรวจสอบความขัดแย้ง (ประเภทหรือสีไม่ตรงกัน)
+                            const typeColorSet = new Set();
+                            entries.forEach(entry => {
+                                const typeColorKey = `${entry.vehicle_type}-${entry.vehicle_color}`;
+                                typeColorSet.add(typeColorKey);
+                            });
+        
+                            if (typeColorSet.size > 1) {
+                                // หากมีความขัดแย้ง ให้เพิ่มข้อมูลในตาราง conflict
+                                typeColorSet.forEach((typeColor, idx) => {
+                                    const [type, color] = typeColor.split('-');
+                                    // นับจำนวนการบันทึกที่มีประเภทและสีนี้
+                                    const count = entries.filter(e => e.vehicle_type === type && e.vehicle_color === color).length;
+                                    conflictData.push({
+                                        index: conflictData.length + 1,
+                                        licensePlate: licensePlate,
+                                        vehicleType: type,
+                                        vehicleColor: color,
+                                        conflictCount: count
+                                    });
+                                });
+                            }
+                        }
+        
+                        // อัพเดตตารางกล้อง
+                        cameraTable.clear();
+                        cameraTable.rows.add(cameraData);
+                        cameraTable.draw();
+        
+                        // อัพเดตตาราง conflict
+                        conflictTable.clear();
+                        if (conflictData.length > 0) {
+                            conflictTable.rows.add(conflictData);
+                        } else {
+                            // ถ้าไม่มีความขัดแย้ง ให้แสดงข้อความ
+                            conflictTable.rows.add([{
+                                index: '',
+                                licensePlate: '',
+                                vehicleType: '',
+                                vehicleColor: '',
+                                conflictCount: 'ไม่มีความขัดแย้ง'
+                            }]);
+                        }
+                        conflictTable.draw();
+                    })
+                    .catch(error => console.error('Error fetching camera data:', error));
+            }
+        
+            // เพิ่ม Event Listener สำหรับปุ่มค้นหา
+            const searchButton = document.getElementById('searchForm').querySelector('button[type="button"]');
+            
+            if (searchButton) {
+                console.log("Search button found"); 
+                searchButton.addEventListener('click', function(event) {
+                    console.log("Search button clicked."); 
+                    fetchCameraData(event);
+                });
+            } else {
+                console.error("Search button not found");
+            }
+        });
+        </script>
+</body>           
+{% endblock %}

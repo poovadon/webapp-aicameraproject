@@ -1,0 +1,49 @@
+#preLoader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    visibility: visible; /* เริ่มต้นที่แสดง preLoader */
+    opacity: 1;
+    transition: opacity 2s ease-in-out; /* เพิ่ม transition เพื่อทำให้มีการเปลี่ยนแปลงใน opacity ที่นุ่มนวล */
+}
+
+#pageContent {
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s, opacity 2s ease-in-out; /* เพิ่ม transition เพื่อทำให้มีการเปลี่ยนแปลงใน visibility และ opacity ที่นุ่มนวล */
+}
+
+.lds-dual-ring {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    display: block;
+    border: 6px solid #333;
+    border-radius: 50%;
+    border-color: #333 transparent #333 transparent;
+    animation: lds-dual-ring 1.2s linear infinite;
+}
+
+@keyframes lds-dual-ring {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.fadecontent {
+    animation-name: fade;
+    animation-duration: 2s;
+}
+
+@keyframes fade {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

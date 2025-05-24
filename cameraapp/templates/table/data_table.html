@@ -1,0 +1,218 @@
+{% extends "base.html" %}{% load static %}
+
+{% block title %}
+    <title>Edge Devices Data</title>
+{% endblock %}
+
+{% block content %}
+<style>
+div.dt-container .dt-paging .dt-paging-button:hover {
+  border: 1px solid #fff;
+  background: linear-gradient(to bottom, #fff 0%, #fff 100%);
+}
+</style>
+<body onload="activeShowPage()">
+    <div class="lds-dual-ring" id="preLoader"></div>
+    <div id="pageContent" class="content fadecontent">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">Edge Devices Data</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">home</a></li>
+                <li class="breadcrumb-item active">Edge Devices Data</li>
+            </ol>
+            <div class="card shadow mb-4">
+                <br>
+                <!-- Form สำหรับค้นหาข้อมูล -->
+                <form id="searchForm" class="form-inline mb-4 p-3 border rounded" style="background-color: #f8f9fa;">
+                    <div class="form-group mr-3">
+                        <label for="device_id" class="mr-2">Device ID:</label>
+                        <input type="text" name="device_id" id="searchDeviceId" class="form-control" placeholder="Device ID" style="width: 100px;">
+                    </div>
+                    <div class="form-group mr-3">
+                        <label for="status" class="mr-2">Status:</label>
+                        <input type="text" name="status" id="searchStatus" class="form-control" placeholder="Status" style="width: 100px;">
+                    </div>
+                    <div class="form-group mr-3">
+                        <label for="ip_address" class="mr-2">IP Address:</label>
+                        <input type="text" name="ip_address" id="searchIpAddress" class="form-control" placeholder="IP Address" style="width: 150px;">
+                    </div>
+                    <div class="form-group mr-3">
+                        <label for="location_id" class="mr-2">Location ID:</label>
+                        <input type="text" name="location_id" id="searchLocationId" class="form-control" placeholder="Location ID" style="width: 100px;">
+                    </div>
+                    <div class="form-group mr-3">
+                        <label for="start_datetime" class="mr-2">Start Time:</label>
+                        <input type="datetime-local" name="start_datetime" id="searchStartDatetime" class="form-control" style="width: 220px;">
+                    </div>
+                    <div class="form-group mr-3">
+                        <label for="end_datetime" class="mr-2">End Time:</label>
+                        <input type="datetime-local" name="end_datetime" id="searchEndDatetime" class="form-control" style="width: 220px;">
+                    </div>
+                    <button type="button" class="btn btn-primary ml-3">Search</button>
+                </form>
+
+                <!-- ตารางแสดงผลการค้นหา -->
+                <div class="card-body">
+                    <h2 class="text-center mb-4">Search Results</h2>
+                    <div class="table-responsive mx-auto">
+                        <table id="edgeDevicesDataTable" class="table table-bordered table-hover table-striped">
+                            <thead style="background-color: #add8e6;">
+                                <tr>
+                                    <th>Index</th>
+                                    <th>Device ID</th>
+                                    <th>Status</th>
+                                    <th>IP Address</th>
+                                    <th>Location ID</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody id="edgeDevicesDataBody">
+                                <!-- ข้อมูลจะถูกเพิ่มที่นี่ -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+            
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded and parsed");
+            fetchEdgeDevicesData();
+            
+            function formatDateTime(isoString) {
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) {
+                    return 'ไม่ระบุวันที่';  // Handle invalid date
+                }
+            
+                const optionsDate = { day: '2-digit', month: 'short', year: 'numeric' };
+                let formattedDate = date.toLocaleDateString('th-TH', optionsDate);
+                formattedDate = formattedDate.replace(/\s/g, '-');
+            
+                const year = date.getFullYear() + 543;  // Convert to Buddhist year
+                formattedDate = formattedDate.replace(/(\d{2})-(\S{2,3})-(\d{4})/, `$1-$2-${year}`);
+            
+                const optionsTime = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+                const formattedTime = date.toLocaleTimeString('th-TH', optionsTime);
+            
+                return `${formattedDate} ${formattedTime}`;
+            }
+            
+
+            var edgeDevicesTable = $('#edgeDevicesDataTable').DataTable({
+                "paging": true,
+                "searching": true,
+                "info": true,
+                "lengthChange": true,
+                "lengthMenu": [10, 25, 50, 100],
+                "ordering": true,
+                "language": {
+                    "search": "ค้นหา:",
+                    "lengthMenu": "แสดง _MENU_ รายการต่อหน้า",
+                    "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+                    "paginate": {
+                        "first": "<<",
+                        "last": ">>",
+                        "next": ">",
+                        "previous": "<"
+                    }
+                },
+                "data": [], // เริ่มต้นด้วยข้อมูลว่าง
+                "columns": [
+                    { "data": "index" },  // Index column
+                    { "data": "device_id" },  // Device ID column
+                    { 
+                        "data": "status",
+                        "render": function(data, type, row) {
+                            let color = 'grey';
+                            if (data === 'active') color = 'green';
+                            else if (data === 'inactive') color = 'orange';
+                            else if (data === 'error') color = 'red';
+                            
+                            return `<span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: ${color};"></span> ${data}`;
+                        }
+                    },
+                    { "data": "ip_address" },  // IP Address column
+                    { "data": "location_id" },  // Location ID column
+                    { 
+                        "data": "last_heartbeat",  // Last heartbeat instead of timestamp
+                        "render": function(data, type, row) {
+                            // Format last_heartbeat for display
+                            if (type === 'display' || type === 'filter') {
+                                return formatDateTime(data);  // Call the function to format the date
+                            }
+                            return data;  // Return raw data for other types
+                        }
+                    }
+                ]
+            });
+            
+
+            // ฟังก์ชั่นสำหรับดึงข้อมูลและอัพเดตตาราง
+            function fetchEdgeDevicesData(event) {
+                if (event) event.preventDefault();
+                console.log("Fetching edge devices data...");
+                document.getElementById('preLoader').style.display = 'block'; // Show loader
+                
+                const deviceId = document.getElementById('searchDeviceId').value;
+                const status = document.getElementById('searchStatus').value;
+                const ipAddress = document.getElementById('searchIpAddress').value;
+                const locationId = document.getElementById('searchLocationId').value;
+                const startDatetime = document.getElementById('searchStartDatetime').value;
+                const endDatetime = document.getElementById('searchEndDatetime').value;
+
+                const url = `/api/edge_devices/?device_id=${deviceId}&status=${status}&ip_address=${ipAddress}&location_id=${locationId}&start_datetime=${startDatetime}&end_datetime=${endDatetime}`;
+
+                console.log(`URL: ${url}`);
+
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("Data received:", data);
+
+                        // Map the incoming data correctly
+                        const edgeDevicesData = data.map((entry, index) => ({
+                            index: index + 1,
+                            device_id: entry.device_id,
+                            status: entry.status,
+                            ip_address: entry.ip_address,
+                            location_id: entry.location_id,
+                            last_heartbeat: entry.last_heartbeat  // Use last_heartbeat here
+                        }));
+
+                        // อัพเดตตาราง
+                        edgeDevicesTable.clear();
+                        edgeDevicesTable.rows.add(edgeDevicesData);
+                        edgeDevicesTable.draw();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching edge devices data:', error);
+                        alert('Failed to fetch data. Please try again later.');
+                    })
+                    .finally(() => {
+                        document.getElementById('preLoader').style.display = 'none'; // Hide loader
+                    });
+            }
+
+
+            // เพิ่ม Event Listener สำหรับปุ่มค้นหา
+            const searchButton = document.getElementById('searchForm').querySelector('button[type="button"]');
+            
+            if (searchButton) {
+                console.log("Search button found"); 
+                searchButton.addEventListener('click', function(event) {
+                    console.log("Search button clicked."); 
+                    fetchEdgeDevicesData(event);
+                });
+            } else {
+                console.error("Search button not found");
+            }
+        });
+    </script>
+</body>           
+{% endblock %}

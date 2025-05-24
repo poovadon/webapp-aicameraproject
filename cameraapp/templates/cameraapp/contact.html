@@ -1,0 +1,153 @@
+{% extends "base.html" %}{% load static %}
+
+{% block title %}
+    <title>Contact Us</title>
+{% endblock %}
+
+{% block content %}
+<style>
+body {
+    background-color: #f4f7f8; /* สีพื้นหลังที่อ่อนโยน */
+    margin: 0;
+    padding: 0;
+}
+
+.contact_section {
+    padding: 50px 0; /* ระยะห่างด้านบนและล่าง */
+}
+
+.form_container {
+    background-color: #ffffff; /* สีพื้นหลังของฟอร์ม */
+    border-radius: 10px; /* มุมกรอบที่มน */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* เงากรอบ */
+    padding: 30px; /* ขนาดระยะห่างภายในกรอบ */
+}
+
+.heading_container {
+    margin-bottom: 30px; /* ระยะห่างด้านล่างของหัวข้อ */
+}
+
+.heading_container h2 {
+    font-size: 28px; /* ขนาดตัวอักษรหัวข้อ */
+    color: #333; /* สีของหัวข้อ */
+}
+
+.heading_container p {
+    font-size: 16px; /* ขนาดตัวอักษรของข้อความเพิ่มเติม */
+    color: #777; /* สีของข้อความเพิ่มเติม */
+}
+
+.input-box {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px; /* เพิ่มระยะห่างระหว่างบรรทัด */
+}
+
+.icon-circle {
+    width: 45px;
+    height: 45px;
+    background-color: #e6e9ec; /* สีพื้นหลังของไอคอน */
+    border-radius: 50%; /* ทำให้เป็นวงกลม */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px; /* เพิ่มระยะห่างระหว่างไอคอนและข้อความ */
+    transition: background-color 0.3s ease; /* การเปลี่ยนสีอย่างนุ่มนวล */
+}
+
+.icon-circle:hover {
+    background-color: #009688; /* เปลี่ยนสีเมื่อมีการวางเมาส์ */
+}
+
+.icon-circle i {
+    font-size: 20px;
+    color: #555; /* สีของไอคอน */
+    transition: color 0.3s ease; /* การเปลี่ยนสีไอคอนอย่างนุ่มนวล */
+}
+
+.icon-circle:hover i {
+    color: #ffffff; /* เปลี่ยนสีไอคอนเมื่อมีการวางเมาส์ */
+}
+
+.message-box {
+    background-color: #ffffff; /* สีพื้นหลังของข้อความ */
+    padding: 10px; /* ขนาดระยะห่างภายในกรอบ */
+    border-radius: 5px; /* มุมกรอบที่มน */
+    border: 1px solid #ccc; /* ขอบกรอบ */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* เงากรอบ */
+    width: calc(100% - 60px); /* ปรับขนาดกรอบข้อความให้เหมาะสม */
+}
+
+span {
+    font-size: 16px; /* ขนาดข้อความ */
+    color: #333; /* สีข้อความ */
+}
+
+.btn_box {
+    margin-top: 20px; /* เพิ่มระยะห่างด้านบนของปุ่ม */
+}
+
+.btn_box button {
+    background-color: #009688; /* สีพื้นหลังของปุ่ม */
+    color: white; /* สีของข้อความในปุ่ม */
+    border: none; /* ไม่มีขอบ */
+    border-radius: 5px; /* มุมกรอบที่มน */
+    padding: 10px 20px; /* ขนาดระยะห่างภายในปุ่ม */
+    font-size: 16px; /* ขนาดข้อความในปุ่ม */
+    cursor: pointer; /* เปลี่ยนเคอร์เซอร์เมื่อวางเมาส์ */
+    transition: background-color 0.3s ease; /* การเปลี่ยนสีอย่างนุ่มนวล */
+}
+
+.btn_box button:hover {
+    background-color: #00796b; /* เปลี่ยนสีปุ่มเมื่อมีการวางเมาส์ */
+}
+
+</style>
+<body onload="activeShowPage()">
+    <div class="lds-dual-ring" id="preLoader"></div>
+    <div id="pageContent" class="content fadecontent">
+        <section class="contact_section long_section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6 offset-md-3"> <!-- จัดกลางฟอร์ม -->
+                        <div class="form_container">
+                            <div class="heading_container text-center">
+                                <h2>ติดต่อเรา</h2>
+                                <p>เรายินดีที่จะได้รับฟังจากคุณ!</p>
+                            </div>
+                            <form action="">
+                                <div class="input-box">
+                                    <div class="icon-circle">
+                                        <i class="fa fa-user"></i> <!-- ไอคอนชื่อผู้ใช้ -->
+                                    </div>
+                                    <div class="message-box">
+                                        <span>ชื่อของคุณ: จอห์น โด</span>
+                                    </div>
+                                </div>
+
+                                <div class="input-box">
+                                    <div class="icon-circle">
+                                        <i class="fa fa-phone"></i> <!-- ไอคอนเบอร์โทรศัพท์ -->
+                                    </div>
+                                    <div class="message-box">
+                                        <span>หมายเลขโทรศัพท์: 123-456-7890</span>
+                                    </div>
+                                </div>
+
+                                <div class="input-box">
+                                    <div class="icon-circle">
+                                        <i class="fa fa-envelope"></i> <!-- ไอคอนอีเมล -->
+                                    </div>
+                                    <div class="message-box">
+                                        <span>อีเมล: john@example.com</span>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>        
+{% endblock %}

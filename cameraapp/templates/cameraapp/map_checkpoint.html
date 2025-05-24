@@ -1,0 +1,792 @@
+{% extends "base.html" %} {% load static %} {% block title %}
+<title>แผนที่จุดตรวจ</title>
+{% endblock %} {% block content %}
+
+
+
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen/Control.FullScreen.css" />
+
+<script src="https://unpkg.com/leaflet.fullscreen/Control.FullScreen.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-fullscreen/dist/leaflet.fullscreen.css" />
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+<link rel="stylesheet" href="{% static 'css/leaflet-notifications.css' %}" />
+<script src="{% static 'js/leaflet-notifications.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/L.Icon.Pulse.css' %}" />
+<script src="{% static 'js/L.Icon.Pulse.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/L.Control.Sidebar.css' %}" />
+<script src="https://unpkg.com/leaflet-sidebar-v2/js/leaflet-sidebar.min.js"></script>
+<script src="{% static 'js/Leaflet.EdgeMarker.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/L.Control.MousePosition.css' %}" />
+<script src="{% static 'js/L.Control.MousePosition.js' %}"></script>
+    <!-- เชื่อมต่อ JavaScript ของ Control Geocoder -->
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+
+<style>
+/* Style the tabs in the sidebar */
+#sidebar .leaflet-sidebar-tabs {
+    background-color: #eee; /* Background color of the tabs area */
+}
+.color-explanation-box ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.color-explanation-box li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.color-box {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    border: 1px solid black;
+    display: inline-block;
+}
+
+#toggle-box-btn {
+    display: none; /* ซ่อนปุ่ม toggle ไว้ตอนแรก */
+}
+#toggle-box-icon {
+    width: 25px; /* ปรับขนาดของไอคอน */
+    height: 25px;
+    cursor: pointer;
+    display: none; /* ซ่อนไว้ตอนแรก */
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 0 5px;
+    border: 1px solid #ccc; /* กรอบสีเทา */
+    border-radius: 4px; /* มุมโค้ง */
+    background-color: #f9f9f9;
+    color: black;
+    text-decoration: none;
+}
+
+/* เมื่อเอาเมาส์ไปชี้ที่ปุ่ม pagination */
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background-color: #ddd; /* เปลี่ยนสีพื้นหลังเมื่อ hover */
+    border-color: #888; /* เปลี่ยนสีกรอบเมื่อ hover */
+}
+
+/* สไตล์ปุ่มที่ active */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background-color: #007bff; /* สีพื้นหลังสำหรับปุ่มที่ถูกเลือก */
+    color: white;
+    border-color: #007bff;
+}
+</style>
+<body onload="activeShowPage()">
+    <div class="lds-dual-ring" id="preLoader"></div>
+    <div id="pageContent" class="content fadecontent">
+            <div class="container-fluid px-4">
+                <h1 class="mt-4">แผนที่จุดตรวจ</h1>
+                <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'home' %}">home</a>
+                </li>
+                <li class="breadcrumb-item active">แผนที่</li>
+                </ol>
+                <div class="card shadow mb-4">
+                <div class="card-body">
+                    <div id="map" style="height: 750px"></div>
+                </div>
+                </div>
+                <!--
+                <div class="card shadow mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <div class="table-responsive mx-auto">
+                                <h2 class="mt-4">รายการกล้อง</h2>
+                                <table id="camera-table" class="table table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col">ลำดับ</th>
+                                        <th scope="col">หมายเลขทะเบียน</th>
+                                        <th scope="col">จุดตรวจ</th>
+                                        <th scope="col">วันเวลา</th>
+                                        <th scope="col">ประเภทรถ</th>
+                                        <th scope="col">สีรถ</th>
+                                        <th scope="col">ละติจูด</th>
+                                        <th scope="col">ลองจิจูด</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <!-- ข้อมูลในตารางจะถูกเพิ่มไปเรื่อยๆ ที่นี่ 
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>-->
+                <br />
+                <div id="sidebar" class="leaflet-sidebar collapsed">
+                <!-- Nav tabs -->
+                <div class="leaflet-sidebar-tabs">
+                    <ul role="tablist">
+                    <!-- top aligned tabs -->
+                    <li>
+                        <a href="#home" role="tab"><i class="fa fa-bars"></i></a>
+                    </li>
+                    </ul>
+
+                    <ul role="tablist">
+                    <!-- bottom aligned tabs -->
+                    </ul>
+                </div>
+
+                <!-- Tab panes -->
+                <div class="leaflet-sidebar-content">
+                    <div class="leaflet-sidebar-pane" id="home">
+                    <h1 class="leaflet-sidebar-header">
+                        กล้อง AI
+                        <div class="leaflet-sidebar-close">
+                        <i class="fa fa-caret-left"></i>
+                        </div>
+                    </h1>
+                    <p>A responsive sidebar for mapping libraries</p>
+                    </div>
+                </div>
+                </div>
+                <div class="d-flex align-items-center mb-4">
+                    <form id="searchForm" class="form-inline mb-4 p-3 border rounded bg-light shadow-sm">
+                        <div class="form-group mr-3 mb-2">
+                            <label for="checkpoint" class="mr-2 font-weight-bold">หมายเลขจุดตรวจ:</label>
+                            <input type="text" name="checkpoint" id="searchCheckpoint" class="form-control" placeholder="1" style="width: 120px;">
+                        </div>
+            
+                        <div class="form-group mr-3 mb-2">
+                            <label for="locationName" class="mr-2 font-weight-bold">ชื่อจุดตรวจ:</label>
+                            <input type="text" name="locationName" id="locationName" class="form-control" placeholder="1" style="width: 120px;">
+                        </div>
+                    
+                        <div class="form-group mr-3">
+                            <label for="start_datetime" class="mr-2 font-weight-bold">เวลาบันทึกภาพ:</label>
+                            <input type="datetime-local" name="start_datetime" id="searchStartDatetime" class="form-control" style="width: 240px;">
+                        </div>
+                    
+                        <div class="form-group mr-3">
+                            <span class="mr-2 font-weight-bold">ถึง</span>
+                            <input type="datetime-local" name="end_datetime" id="searchEndDatetime" class="form-control" style="width: 240px;">
+                        </div>
+                    
+                        <div class="form-group mr-3">
+                            <label for="plate_part1" class="mr-2 font-weight-bold">ทะเบียนรถ:</label>
+                            <input type="text" name="plate_part1" id="searchPlatePart1" class="form-control text-uppercase" placeholder="ศว" style="width: 70px;">
+                            <span class="mx-2 font-weight-bold">-</span>
+                            <input type="text" name="plate_part2" id="searchPlatePart2" class="form-control" placeholder="4652" style="width: 90px;">
+                            <span class="mx-2 font-weight-bold">-</span>
+                            <input type="text" name="plate_part3" id="searchPlatePart3" class="form-control" placeholder="ตาก" style="width: 70px;">
+                        </div>
+
+                        <div class="form-group mr-3">
+                            <label for="searchDeviceId" class="mr-2 font-weight-bold">ค้นหากล้อง:</label>
+                            <input type="text" name="searchDeviceId" id="searchDeviceId" class="form-control text-uppercase" placeholder="device_1" style="width: 70px;">
+                            <span class="mx-2 font-weight-bold">-</span>
+                            <input type="text" name="searchStatus" id="searchStatus" class="form-control" placeholder="4652" style="width: 90px;">
+                            <span class="mx-2 font-weight-bold">-</span>
+                            <input type="text" name="searchIpAddress" id="searchIpAddress" class="form-control" placeholder="ตาก" style="width: 70px;">
+                        </div>
+                    
+                        <button type="submit" class="btn btn-primary ml-3">
+                            <i class="fa fa-search"></i> ค้นหา
+                        </button>
+                    </form>                    
+                </div>   
+                <div class="d-flex align-items-center mb-4">
+                    {% if message %}
+                        <div class="alert mb-0 ml-3
+                            {% if message == "ไม่พบข้อมูลทะเบียนรถที่ค้นหา" %}alert-danger
+                            {% elif message == "กรุณากรอกข้อมูลหมายเลขทะเบียนรถให้ครบถ้วน" %}alert-warning
+                            {% else %}alert-success
+                            {% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endif %}
+                </div>  
+
+               {% if camera_data %}
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <h2 class="text-center mb-4">ผลการค้นหาสำหรับทะเบียนรถ: {{ form.cleaned_data.plate_part1 }}-{{ form.cleaned_data.plate_part2 }}-{{ form.cleaned_data.plate_part3 }}</h2>
+                        <div class="table-responsive mx-auto">
+                            <table id="cameraDataTable" class="table table-bordered table-hover table-striped">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th>วันที่และเวลา</th>
+                                        <th>จุดตรวจ</th>
+                                        <th>ทะเบียนรถ</th>
+                                        <th>ประเภท</th>
+                                        <th>สี</th>
+                                        <th>พิกัด (Latitude, Longitude)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in camera_data %}
+                                        <tr>
+                                            <td>{{ record.timestamp }}</td>
+                                            <td>{{ record.checkpoint_id }}</td>
+                                            <td>{{ record.license_plate }}</td>
+                                            <td>{{ record.vehicle_type }}</td>
+                                            <td>{{ record.vehicle_color }}</td>
+                                            <td>{{ record.latitude }}, {{ record.longitude }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if conflicting_results %}
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <h2 class="text-center mb-4">ข้อมูลทะเบียนรถเดียวกัน</h2>
+                        <div class="table-responsive mx-auto">
+                            <table id="conflictDataTable" class="table table-bordered table-hover table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>ประเภท</th>
+                                        <th>สี</th>
+                                        <th>จำนวนการบันทึก</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for conflict in conflicting_results %}
+                                        <tr>
+                                            <td>{{ conflict.vehicle_type }}</td>
+                                            <td>{{ conflict.vehicle_color }}</td>
+                                            <td>{{ conflict.count }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- สคริปต์สำหรับใช้งาน DataTables -->
+            <script>
+            $(document).ready(function() {
+                // เปิดใช้งาน DataTables สำหรับตารางที่มี ID cameraDataTable
+                $('#cameraDataTable').DataTable({
+                    "paging": true,  
+                    "searching": true,
+                    "info": true,  
+                    "lengthChange": true, 
+                    "ordering": true,  
+                    "language": {
+                        "search": "ค้นหา:",
+                        "lengthMenu": "แสดง _MENU_ รายการต่อหน้า",
+                        "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+                        "paginate": {
+                            "first": "<<",
+                            "last": ">>",
+                            "next": ">",
+                            "previous": "<"
+                        }
+                    }
+                });
+
+                // เปิดใช้งาน DataTables สำหรับตารางที่มี ID conflictDataTable
+                $('#conflictDataTable').DataTable({
+                    "paging": true,
+                    "searching": true,
+                    "info": true,
+                    "lengthChange": true,
+                    "ordering": true,
+                    "language": {
+                        "search": "ค้นหา:",
+                        "lengthMenu": "แสดง _MENU_ รายการต่อหน้า",
+                        "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+                        "paginate": {
+                            "first": "<<",
+                            "last": ">>",
+                            "next": ">",
+                            "previous": "<"
+                        }
+                    }
+                });
+            });
+            </script>
+                <img id="yourImage" src="{% static '/img/edge-arrow-marker.png' %}" alt="Your Image" style="display: none;">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/1.1.1/chartjs-plugin-zoom.min.js"></script>
+                <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+                <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+                <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+                <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+                <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+                <script>
+                    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© OpenStreetMap'
+                    });
+
+                    var osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team hosted by OpenStreetMap France'
+                    });
+
+                    var openTopoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)'
+                    });
+
+                    var satelliteMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        maxZoom: 19,
+                        attribution: 'Esri, Maxar, GeoIQ, OpenStreetMap contributors'
+                    });
+
+                    // Create the map and set the view
+                    var map = L.map('map', {
+                        center: [14.063, 102.899], // พิกัดเริ่มต้น
+                        zoom: 13,                  // ระดับการซูมเริ่มต้น
+                        layers: [satelliteMap],     // ใช้แผนที่ดาวเทียมเป็นชั้นเริ่มต้น
+                        fullscreenControl: true,    // เปิดใช้งาน Fullscreen control
+                        fullscreenControlOptions: { // ตั้งค่าการควบคุมเพิ่มเติม
+                            position: 'topright'     // ตำแหน่งของปุ่ม Fullscreen
+                        }
+                    });
+                    // เพิ่มการควบคุมสเกลบนแผนที่
+                    L.control.scale().addTo(map);
+
+
+                    var baseLayers = {
+                        "OpenStreetMap": osm,
+                        "OpenStreetMap HOT": osmHOT,
+                        "OpenTopoMap": openTopoMap,
+                        "Satellite Map": satelliteMap
+                    };
+                    // Add control for base layers and overlay maps
+                    L.control.layers(baseLayers).addTo(map);
+
+                    function formatDateTime(isoString) {
+                        const date = new Date(isoString);
+                        if (isNaN(date.getTime())) {
+                            return 'ไม่ระบุวันที่'; // กรณีข้อมูลไม่ถูกต้อง
+                        }
+                    
+                        // แปลงปี ค.ศ. เป็น พ.ศ.
+                        const yearTH = date.getFullYear() + 543;
+                    
+                        // ชื่อเดือนย่อในภาษาไทย
+                        const thaiMonths = [
+                            "ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.",
+                            "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."
+                        ];
+                    
+                        const day = date.getDate(); // วันที่
+                        const month = thaiMonths[date.getMonth()]; // ชื่อเดือน
+                        const hours = date.getHours().toString().padStart(2, '0'); // ชั่วโมง
+                        const minutes = date.getMinutes().toString().padStart(2, '0'); // นาที
+                        const seconds = date.getSeconds().toString().padStart(2, '0'); // วินาที
+                    
+                        return `${day} ${month} ${yearTH} ${hours}:${minutes}:${seconds} น.`;
+                    }                    
+                    function parseThaiDate(thaiDateString) {
+                        // ตัวอย่าง input: "1 ต.ค. 2567 05:41:00 น."
+                        const thaiMonths = {
+                            "ม.ค.": 0, "ก.พ.": 1, "มี.ค.": 2, "เม.ย.": 3, "พ.ค.": 4, "มิ.ย.": 5,
+                            "ก.ค.": 6, "ส.ค.": 7, "ก.ย.": 8, "ต.ค.": 9, "พ.ย.": 10, "ธ.ค.": 11
+                        };
+                    
+                        // แยกส่วนวันที่ เวลา และปี พ.ศ.
+                        const [day, monthThai, yearTH, time] = thaiDateString.replace(' น.', '').split(' ');
+                        const [hours, minutes, seconds] = time.split(':').map(Number);
+                        const yearAD = parseInt(yearTH, 10) - 543; // แปลง พ.ศ. เป็น ค.ศ.
+                    
+                        // สร้าง Date object
+                        return new Date(yearAD, thaiMonths[monthThai], parseInt(day, 10), hours, minutes, seconds);
+                    }
+                    function fetchCameraData(event) {
+                        // ป้องกันไม่ให้ฟอร์มรีเฟรชหน้า
+                        if (event) event.preventDefault();
+                        console.log("Fetching camera data...");
+                    
+                        // รับค่าจากฟอร์ม
+                        const checkpoint = document.getElementById('searchCheckpoint')?.value || '';
+                        const startDatetime = document.getElementById('searchStartDatetime')?.value || '';
+                        const endDatetime = document.getElementById('searchEndDatetime')?.value || '';
+                        const platePart1 = document.getElementById('searchPlatePart1')?.value || '';
+                        const platePart2 = document.getElementById('searchPlatePart2')?.value || '';
+                        const platePart3 = document.getElementById('searchPlatePart3')?.value || '';
+                        const locationName = document.getElementById('locationName')?.value || '';
+                        const deviceId = document.getElementById('searchDeviceId')?.value || '';
+                        const status = document.getElementById('searchStatus')?.value || '';
+                        const ipAddress = document.getElementById('searchIpAddress')?.value || '';
+
+                        // สร้าง URL สำหรับ API
+                        const urlCameras = `/api/cameras/?checkpoint=${checkpoint}&start_datetime=${startDatetime}&end_datetime=${endDatetime}&plate_part1=${platePart1}&plate_part2=${platePart2}&plate_part3=${platePart3}`;
+                        const urlCheckpoints = `/api/checkpoints/?checkpoint_id=${checkpoint}&location_name=${locationName}`;
+                        const urlEdgeDevices = `/api/edge_devices/?device_id=${deviceId}&status=${status}&ip_address=${ipAddress}&location_id=${checkpoint}&start_datetime=${startDatetime}&end_datetime=${endDatetime}`;
+                    
+                        console.log(`URL Cameras: ${urlCameras}`);
+                        console.log(`URL Checkpoints: ${urlCheckpoints}`);
+                        console.log(`URL EdgeDevices: ${urlEdgeDevices}`);
+                    
+                        // ใช้ Promise.all เพื่อดึงข้อมูลจากทั้งสอง API
+                        Promise.all([
+                            fetch(urlCameras).then(response => {
+                                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                                return response.json();
+                            }),
+                            fetch(urlCheckpoints).then(response => {
+                                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                                return response.json();
+                            }),
+                            fetch(urlEdgeDevices).then(response => {
+                                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                                return response.json();
+                            })
+                        ])
+                            .then(([cameraData, checkpointData, edgeDevicesData]) => {
+                                // ตรวจสอบข้อมูลกล้อง
+                                if (cameraData.length === 0) {
+                                    console.warn("No camera data available.");
+                                    alert("ไม่พบข้อมูลกล้องที่ตรงกับการค้นหา");
+                                    return;
+                                }
+                    
+                                // ตรวจสอบข้อมูลจุดตรวจ
+                                if (checkpointData.length === 0) {
+                                    console.warn("No checkpoint data available.");
+                                    alert("ไม่พบข้อมูลจุดตรวจที่ตรงกับการค้นหา");
+                                    return;
+                                }
+
+                                if (edgeDevicesData.length === 0) {
+                                    console.warn("No edge devices data available.");
+                                    alert("ไม่พบข้อมูล Edge Devices ที่ตรงกับการค้นหา");
+                                    return;
+                                }                                
+                    
+                                // แปลงเวลาในข้อมูลกล้อง
+                                const formattedCameraData = cameraData.map(item => ({
+                                    ...item,
+                                    formattedTimestamp: formatDateTime(item.timestamp),
+                                }));
+                                const formattedEgeData = edgeDevicesData.map(item => ({
+                                    ...item,
+                                    formattedTimeEge: formatDateTime(item.last_heartbeat),
+                                }));
+                    
+                                console.log("Formatted Camera Data:", formattedCameraData);
+                                console.log("Checkpoint Data:", checkpointData);
+                                console.log("Edge Devices Data:", formattedEgeData);
+                    
+                                // เรียกใช้ updateMarkers โดยใช้ข้อมูลที่รวมกัน
+                                updateMarkers(formattedCameraData, checkpointData, formattedEgeData);
+                            })
+                            .catch(error => {
+                                console.error("Error fetching data:", error);
+                                alert("เกิดข้อผิดพลาดในการดึงข้อมูล: " + error.message);
+                            });
+                    }                    
+                    function updateMarkers(cameraData, checkpointData, edgeDevicesData) {
+                        console.log("Updating markers on the map...");
+                    
+                        // ลบ markers เก่าทั้งหมดออกจากแผนที่
+                        map.eachLayer(existingMarker => {
+                            if (existingMarker instanceof L.Marker) {
+                                map.removeLayer(existingMarker);
+                            }
+                        });
+                    
+                        // สร้าง array สำหรับเก็บ waypoints
+                        const waypoints = [];
+                    
+                        // เพิ่ม markers ใหม่จากข้อมูล checkpointData
+                        checkpointData.forEach(location => {
+                            if (location.gps_latitude && location.gps_longitude) { // ตรวจสอบพิกัด
+                                const icon = L.icon({
+                                    iconUrl: "{% static 'img/camera.png' %}",
+                                    iconSize: [32, 32],
+                                    iconAnchor: [16, 32],
+                                    popupAnchor: [0, -32]
+                                });
+                    
+                                // ค้นหา edgeDevicesData ที่ตรงกับ checkpoint
+                                const relatedEdgeDevices = edgeDevicesData.filter(EdgeDevices => EdgeDevices.location_id === location.checkpoint_id);
+                    
+                                // สร้าง Marker สำหรับ Checkpoint
+                                const marker = L.marker([location.gps_latitude, location.gps_longitude], { icon: icon }).addTo(map);
+                                waypoints.push(L.latLng(location.gps_latitude, location.gps_longitude));
+                    
+                                // สร้าง Popup
+                                // สร้าง Popup
+                                // สร้าง Popup
+                                let popupContent = `
+                                <div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5;">
+                                    <b style="font-weight: bold;">ชื่อจุดตรวจ:</b> ${location.location_name}<br>
+                                    <b style="font-weight: bold;">หมายเลขจุดตรวจ:</b> ${location.checkpoint_id}<br>
+                                    <b style="font-weight: bold;">พิกัด:</b> ${location.gps_latitude}, ${location.gps_longitude}<br>
+                                    <hr style="margin: 8px 0; border: none; border-top: 1px solid #ccc;">
+                                    <b style="font-weight: bold;">อุปกรณ์ที่เกี่ยวข้อง</b>
+                                    <div style="margin-top: 8px;">
+                                        ${relatedEdgeDevices.length > 0
+                                            ? relatedEdgeDevices
+                                                .map(Edge => `
+                                                    <div style="border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin-bottom: 8px;">
+                                                        <p style="margin: 0;">
+                                                            <b>Device ID:</b> ${Edge.device_id}<br>
+                                                            <b>IP Address:</b> ${Edge.ip_address}<br>
+                                                            <b>สถานะ:</b> <span style="color: ${getStatusColor(Edge.status)}; font-weight: bold;">
+                                                                ${Edge.status}
+                                                            </span>
+                                                        </p>
+                                                    </div>
+                                                `)
+                                                .join("")
+                                            : "<p><i>ไม่มีข้อมูลอุปกรณ์</i></p>"
+                                        }
+                                    </div>
+                                </div>
+                                `;
+                                
+
+                    
+                                // เพิ่มข้อมูลจาก cameraData ใน popup
+                                const relatedCameras = cameraData.filter(camera => camera.checkpoint_id === location.checkpoint_id);
+                                /*if (relatedCameras.length > 0) {
+                                    popupContent += `
+                                        <hr><b>ข้อมูลกล้อง:</b>
+                                        ${relatedCameras
+                                            .map(cam => `<p><b>ประเภทรถ:</b> ${cam.vehicle_type}, เวลา: ${cam.formattedTimestamp}</p>`)
+                                            .join("")}
+                                    `;
+                                }*/
+                                
+                                marker.bindPopup(popupContent);
+                    
+                                marker.on('mouseover', () => {
+                                    marker.openPopup();
+                                });
+                    
+                                marker.on('click', () => {
+                                    const panelContent = {
+                                        id: 'userinfo',
+                                        tab: '<i class="fa fa-gear"></i>',
+                                        pane: `
+                                            <div style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5;">
+                                                <h4 style="margin-bottom: 10px;">ข้อมูลจุดตรวจ</h4>
+                                                <p><b>จุดตรวจ:</b> ${location.location_name}</p>
+                                                <p><b>Checkpoint ID:</b> ${location.checkpoint_id}</p>
+                                                <hr style="margin: 10px 0; border: none; border-top: 1px solid #ccc;">
+                                
+                                                <h6 style="font-weight: bold;">อุปกรณ์ที่เกี่ยวข้อง</h6>
+                                                ${relatedEdgeDevices.length > 0
+                                                    ? relatedEdgeDevices.map(Edge => `
+                                                        <div style="border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin-bottom: 8px;">
+                                                            <p style="margin: 0;">
+                                                                <b>Device ID:</b> ${Edge.device_id}<br>
+                                                                <b>IP Address:</b> ${Edge.ip_address || "N/A"}<br>
+                                                                <b>สถานะ:</b> <span style="color: ${getStatusColor(Edge.status)}; font-weight: bold;">
+                                                                    ${Edge.status || "Unknown"}
+                                                                </span><br>
+                                                                <b>เวลา Heartbeat ล่าสุด:</b> ${Edge.formattedTimeEge || "N/A"}
+                                                            </p>
+                                                        </div>
+                                                    `).join("")
+                                                    : "<p><i>ไม่มีข้อมูล Edge Devices</i></p>"
+                                                }
+                                                <hr style="margin: 10px 0; border: none; border-top: 1px solid #ccc;">
+                                
+                                                <h6 style="font-weight: bold;">ข้อมูลรถ</h6>
+                                                ${relatedCameras.length > 0
+                                                    ? relatedCameras
+                                                        .sort((a, b) => parseThaiDate(b.formattedTimestamp) - parseThaiDate(a.formattedTimestamp))
+                                                        .map(cam => `
+                                                            <div style="border: 1px solid #ddd; border-radius: 4px; padding: 8px; margin-bottom: 8px;">
+                                                                <p style="margin: 0;">
+                                                                    <b>ประเภทรถ:</b> ${cam.vehicle_type}<br>
+                                                                    <b>สีรถ:</b> ${cam.vehicle_color}<br>
+                                                                    <b>ทะเบียน:</b> ${cam.license_plate}<br>
+                                                                    <b>วันที่:</b> ${cam.formattedTimestamp}<br>
+                                                                    <b>พิกัด:</b> (${cam.latitude}, ${cam.longitude})
+                                                                </p>
+                                                            </div>
+                                                        `).join("")
+                                                    : "<p><i>ไม่มีข้อมูลกล้อง</i></p>"
+                                                }
+
+                                            </div>
+                                        `,
+                                        title: 'ข้อมูลที่เกี่ยวข้อง',
+                                        position: 'bottom'
+                                    };
+                    
+                                    // ลบ Panel เดิมและเพิ่ม Panel ใหม่
+                                    sidebar.removePanel('userinfo');
+                                    sidebar.addPanel(panelContent);
+                                    sidebar.open('userinfo');
+                                });
+                            } else {
+                                console.error("Missing GPS coordinates for checkpoint:", location);
+                            }
+                        });
+                        // ฟังก์ชันช่วยเลือกสีตามสถานะ
+                        function getStatusColor(status) {
+                            switch (status?.toLowerCase()) {
+                                case 'active':
+                                    return 'green';
+                                case 'inactive':
+                                    return 'orange';
+                                case 'error':
+                                    return 'red';
+                                default:
+                                    return 'gray';
+                            }
+                        }
+                    
+                        // ปิด Sidebar เมื่อคลิกแผนที่
+                        map.off('click'); // ลบ Listener เก่า
+                        map.on('click', () => {
+                            console.log("Map clicked, closing sidebar...");
+                            sidebar.close('userinfo');
+                        });
+                    
+                        // อัปเดตตำแหน่งแผนที่โดยใช้ checkpointData แทน cameraData
+                        if (checkpointData.length > 0) {
+                            const latestCheckpoint = checkpointData[0];
+                            map.panTo([latestCheckpoint.gps_latitude, latestCheckpoint.gps_longitude]);
+                        }
+                    }                                       
+                    // เชื่อมโยงฟังก์ชันกับฟอร์ม
+                    document.getElementById('searchForm').addEventListener('submit', fetchCameraData);                    
+
+                    var notificationControl = L.control.notifications({
+                        position: 'bottomright'
+                    }).addTo(map);
+
+                    L.control.mousePosition().addTo(map);
+
+                    var edgeMarkerLayer = L.edgeMarker({
+                        findEdge : function(map){return L.bounds([200,0],map.getSize());},
+                        icon: L.icon({ // style markers
+                            iconUrl : document.getElementById('yourImage').src,
+                            clickable: true,
+                            iconSize: [18,18],
+                            iconAnchor: [10, 10]
+                        })
+                    }).addTo(map);
+
+                    var panelContent;  // ประกาศตัวแปรนอกส่วนของ click event
+                    var sidebar = L.control.sidebar({
+                        autopan: true,       // whether to maintain the centered map point when opening the sidebar
+                        closeButton: true,    // whether t add a close button to the panes
+                        container: 'sidebar', // the DOM container or #ID of a predefined sidebar container that should be used
+                        position: 'left',     // left or right
+                    }).addTo(map);
+                    map.addControl(sidebar);
+
+                    // สร้างกล่องข้อความใหม่สำหรับอธิบายสีเส้นทางของรถ
+                    var colorExplanationBox = L.control({ position: 'topright' });
+
+                    colorExplanationBox.onAdd = function(map) {
+                        var div = L.DomUtil.create('div', 'color-explanation-box');
+                        
+                        // เพิ่มข้อความอธิบายสี
+                        div.innerHTML = `
+                            <h4>คำอธิบายสีเส้นทางรถ</h4>
+                            <ul>
+                                <li><span class="color-box" style="background-color: blue;"></span> รถยนต์กระบะ (Pickup truck)</li>
+                                <li><span class="color-box" style="background-color: green;"></span> รถเก๋งส่วนบุคคล (Personal car)</li>
+                                <li><span class="color-box" style="background-color: red;"></span> รถบรรทุก 6 ล้อ (6-wheeled truck)</li>
+                                <li><span class="color-box" style="background-color: purple;"></span> รถตู้โดยสาร (Van)</li>
+                                <li><span class="color-box" style="background-color: orange;"></span> รถบรรทุก 10 ล้อ (10-wheeled truck)</li>
+                                <li><span class="color-box" style="background-color: yellow;"></span> รถบัส (Bus)</li>
+                                <li><span class="color-box" style="background-color: gray;"></span> อื่น ๆ (Other types)</li>
+                            </ul>
+                            <button id="hide-box-btn" class="btn btn-primary btn-sm">ซ่อน</button>
+                        `;
+                        div.style.backgroundColor = 'white'; // สีพื้นหลังของกล่องข้อความ
+                        div.style.padding = '10px'; // ระยะห่างภายใน
+                        div.style.border = '2px solid rgba(0,0,0,0.2)';
+                        div.style.borderRadius = '8px';
+
+                        return div;
+                    };
+
+                    // เพิ่มกล่องข้อความลงในแผนที่
+                    colorExplanationBox.addTo(map);
+
+                    // สร้างปุ่มแสดง/ซ่อนแยกต่างหาก
+                    var toggleButton = L.control({ position: 'topright' });
+
+                    toggleButton.onAdd = function(map) {
+                        var buttonDiv = L.DomUtil.create('div', 'toggle-button');
+                        
+                        // เปลี่ยนเป็นไอคอนรูปภาพ
+                        buttonDiv.innerHTML = '<img id="toggle-box-icon" src="{% static "img/highway.png" %}" alt="แสดงคำอธิบายสี" title="แสดงคำอธิบายสี">';
+                        
+                        buttonDiv.style.backgroundColor = 'white';
+                        buttonDiv.style.padding = '10px';
+                        buttonDiv.style.border = '2px solid rgba(0,0,0,0.2)';
+                        buttonDiv.style.borderRadius = '8px';
+                        return buttonDiv;
+                    };
+
+                    // เพิ่มปุ่มแสดง/ซ่อนกล่องคำอธิบายสี
+                    toggleButton.addTo(map);
+
+                    // เพิ่มฟังก์ชันสำหรับซ่อนกล่องข้อความเมื่อคลิกปุ่มซ่อน
+                    document.addEventListener("DOMContentLoaded", function() {
+                        document.getElementById("hide-box-btn").addEventListener("click", function() {
+                            document.querySelector('.color-explanation-box').style.display = 'none'; // ซ่อนกล่องคำอธิบาย
+                            document.getElementById("toggle-box-icon").style.display = 'block'; // แสดงไอคอน toggle
+                        });
+
+                        document.getElementById("toggle-box-icon").addEventListener("click", function() {
+                            document.querySelector('.color-explanation-box').style.display = 'block'; // แสดงกล่องคำอธิบาย
+                            document.getElementById("toggle-box-icon").style.display = 'none'; // ซ่อนไอคอน toggle
+                        });
+                    });
+
+                    fetchCameraData();
+
+                    function updateTable() {
+                        fetch("{% url 'camera_data' %}")
+                            .then(response => response.json())
+                            .then(data => {
+                                const cameraTable = document.getElementById('camera-table');
+                                const tbody = cameraTable.querySelector('tbody');
+                                tbody.innerHTML = ''; // Clear the table content
+                    
+                                data.camera_data.forEach((camera, index) => {
+                                    const row = document.createElement('tr');
+                                    row.innerHTML = `
+                                        <td>${index + 1}</td>
+                                        <td>${camera.license_plate}</td>
+                                        <td>${camera.checkpoint_id}</td>
+                                        <td>${camera.timestamp}</td>
+                                        <td>${camera.vehicle_type}</td>
+                                        <td>${camera.vehicle_color}</td>
+                                        <td>${camera.latitude}</td>
+                                        <td>${camera.longitude}</td>
+                                    `;
+                                    tbody.appendChild(row);
+                                });
+                            })
+                            .catch(error => {
+                                console.error('Error fetching camera data:', error);
+                            });
+                    }
+                    updateTable();
+            </script>
+        </div>
+    </div>
+    <script src="https://cdn.datatables.net/2.1.7/js/dataTables.min.js"></script>
+</body>
+
+{% endblock %}

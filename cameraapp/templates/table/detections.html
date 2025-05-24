@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    <title>Aggregation Detections</title>
+{% endblock %}
+
+{% block content %}
+<style>
+div.dt-container .dt-paging .dt-paging-button:hover {
+  border: 1px solid #fff;
+  background: linear-gradient(to bottom, #fff 0%, #fff 100%);
+}
+</style>
+<body onload="activeShowPage()">
+    <div class="lds-dual-ring" id="preLoader"></div>
+    <div id="pageContent" class="content fadecontent">
+        <div class="container-fluid px-4">
+            <h1 class="mt-4">Aggregation Detections</h1>
+            <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                <li class="breadcrumb-item active">Aggregation Detections</li>
+            </ol>
+            <div class="card shadow mb-4">
+                <br>
+                <!-- Filter Form -->
+                <form id="searchForm" class="form-inline mb-4 p-3 border rounded" style="background-color: #f8f9fa;">
+                    <div class="form-group mr-3">
+                        <label for="aggregation_id" class="mr-2">Aggregation ID:</label>
+                        <input type="text" name="aggregation_id" id="searchAggregationId" class="form-control" placeholder="Aggregation ID" style="width: 100px;">
+                    </div>
+                    <div class="form-group mr-3">
+                        <label for="device_id" class="mr-2">Device ID:</label>
+                        <input type="text" name="device_id" id="searchDeviceId" class="form-control" placeholder="Device ID" style="width: 150px;">
+                    </div>
+                    <div class="form-group mr-3">
+                        <label for="start_datetime" class="mr-2">Start Time:</label>
+                        <input type="datetime-local" name="start_datetime" id="searchStartDatetime" class="form-control" style="width: 220px;">
+                    </div>
+                    <div class="form-group mr-3">
+                        <label for="end_datetime" class="mr-2">End Time:</label>
+                        <input type="datetime-local" name="end_datetime" id="searchEndDatetime" class="form-control" style="width: 220px;">
+                    </div>
+                    <button type="button" class="btn btn-primary ml-3" id="searchButton">Search</button>
+                </form>
+
+                <!-- Results Table -->
+                <div class="card-body">
+                    <h2 class="text-center mb-4">Search Results</h2>
+                    <div class="table-responsive mx-auto">
+                        <table id="aggregationDataTable" class="table table-bordered table-hover table-striped">
+                            <thead style="background-color: #add8e6;">
+                                <tr>
+                                    <th>Index</th>
+                                    <th>Aggregation ID</th>
+                                    <th>Date</th>
+                                    <th>Total Detections</th>
+                                    <th>Device ID</th>
+                                    <th>Intersection ID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="aggregationDataBody">
+                                <!-- Data will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+            
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded and parsed");
+
+            var aggregationTable = $('#aggregationDataTable').DataTable({
+                "paging": true,
+                "searching": true,
+                "info": true,
+                "lengthChange": true,
+                "lengthMenu": [10, 25, 50, 100],
+                "ordering": true,
+                "language": {
+                    "search": "ค้นหา:",
+                    "lengthMenu": "แสดง _MENU_ รายการต่อหน้า",
+                    "info": "แสดง _START_ ถึง _END_ จาก _TOTAL_ รายการ",
+                    "paginate": {
+                        "first": "<<",
+                        "last": ">>",
+                        "next": ">",
+                        "previous": "<"
+                    }
+                },
+                "data": [],
+                "columns": [
+                    { "data": "index" },
+                    { "data": "aggregation_id" },
+                    { "data": "date" },
+                    { "data": "total_detections" },
+                    { "data": "device_id" },
+                    { "data": "intersection_id" }
+                ]
+            });
+
+            // Function to format date in 'th-TH' locale
+            function formatDateTime(isoString) {
+                const date = new Date(isoString);
+                const optionsDate = { day: '2-digit', month: 'short', year: 'numeric' };
+                let formattedDate = date.toLocaleDateString('th-TH', optionsDate);
+                formattedDate = formattedDate.replace(/\s/g, '-');
+                
+                const year = date.getFullYear() + 543;  // Convert to Buddhist year
+                formattedDate = formattedDate.replace(/(\d{2})-(\S{2,3})-(\d{4})/, `$1-$2-${year}`);
+
+                const optionsTime = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+                const formattedTime = date.toLocaleTimeString('th-TH', optionsTime);
+
+                return `${formattedDate} ${formattedTime}`;
+            }
+
+            // Fetch Aggregation Data
+            function fetchAggregationData(event) {
+                if (event) event.preventDefault();
+                console.log("Fetching aggregation data...");
+                document.getElementById('preLoader').style.display = 'block';
+
+                const aggregationId = document.getElementById('searchAggregationId').value;
+                const deviceId = document.getElementById('searchDeviceId').value;
+                const startDatetime = document.getElementById('searchStartDatetime').value;
+                const endDatetime = document.getElementById('searchEndDatetime').value;
+
+                // Ensure that date is in ISO format
+                const startDatetimeISO = startDatetime ? new Date(startDatetime).toISOString() : '';
+                const endDatetimeISO = endDatetime ? new Date(endDatetime).toISOString() : '';
+
+                const url = `/api/aggregation_detections/?aggregation_id=${aggregationId}&device_id=${deviceId}&start_datetime=${startDatetimeISO}&end_datetime=${endDatetimeISO}`;
+                console.log(`URL: ${url}`);
+
+                fetch(url)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("Data received:", data);
+                        const aggregationData = data.map((entry, index) => ({
+                            index: index + 1,
+                            aggregation_id: entry.aggregation_id,
+                            date: formatDateTime(entry.date),
+                            total_detections: entry.total_detections,
+                            device_id: entry.device_id,
+                            intersection_id: entry.intersection_id
+                        }));
+                        
+                        aggregationTable.clear();
+                        aggregationTable.rows.add(aggregationData);
+                        aggregationTable.draw();
+                    })
+                    .catch(error => {
+                        console.error('Error fetching aggregation data:', error);
+                        alert('Failed to fetch data. Please try again later.');
+                    })
+                    .finally(() => {
+                        document.getElementById('preLoader').style.display = 'none';
+                    });
+            }
+
+            const searchButton = document.getElementById('searchButton');
+            if (searchButton) {
+                searchButton.addEventListener('click', fetchAggregationData);
+            }
+
+            // Fetch data on page load
+            fetchAggregationData();
+        });
+    </script>
+</body>
+{% endblock %}

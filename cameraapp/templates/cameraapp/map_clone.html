@@ -1,0 +1,367 @@
+{% extends "base.html" %} {% load static %} {% block title %}
+<title>แผนที่จุดตรวจ</title>
+{% endblock %} {% block content %}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen/Control.FullScreen.css" />
+<script src="https://unpkg.com/leaflet.fullscreen/Control.FullScreen.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+<link rel="stylesheet" href="{% static 'css/leaflet-notifications.css' %}" />
+<script src="{% static 'js/leaflet-notifications.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/L.Icon.Pulse.css' %}" />
+<script src="{% static 'js/L.Icon.Pulse.js' %}"></script>
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<link rel="stylesheet" href="{% static 'css/L.Control.Sidebar.css' %}" />
+<script src="https://unpkg.com/leaflet-sidebar-v2/js/leaflet-sidebar.min.js"></script>
+<script src="{% static 'js/Leaflet.EdgeMarker.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/L.Control.MousePosition.css' %}" />
+<script src="{% static 'js/L.Control.MousePosition.js' %}"></script>
+    <!-- เชื่อมต่อ JavaScript ของ Control Geocoder -->
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<style>
+  /* Style the tabs in the sidebar */
+  #sidebar .leaflet-sidebar-tabs {
+    background-color: #eee; /* Background color of the tabs area */
+  }
+</style>
+<body onload="activeShowPage()">
+    <div class="lds-dual-ring" id="preLoader"></div>
+    <div id="pageContent" class="content fadecontent">
+            <div class="container-fluid px-4">
+                <h1 class="mt-4">แผนที่จุดตรวจ</h1>
+                <ol class="breadcrumb mb-4">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'home' %}">home</a>
+                </li>
+                <li class="breadcrumb-item active">แผนที่</li>
+                </ol>
+                <div class="card shadow mb-4">
+                <div class="card-body">
+                    <div id="map" style="height: 750px"></div>
+                </div>
+                </div>
+                <!--
+                <div class="card shadow mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <div class="table-responsive mx-auto">
+                                <h2 class="mt-4">รายการกล้อง</h2>
+                                <table id="camera-table" class="table table-bordered">
+                                    <thead>
+                                    <tr>
+                                        <th scope="col">ลำดับ</th>
+                                        <th scope="col">หมายเลขทะเบียน</th>
+                                        <th scope="col">จุดตรวจ</th>
+                                        <th scope="col">วันเวลา</th>
+                                        <th scope="col">ประเภทรถ</th>
+                                        <th scope="col">สีรถ</th>
+                                        <th scope="col">ละติจูด</th>
+                                        <th scope="col">ลองจิจูด</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <!-- ข้อมูลในตารางจะถูกเพิ่มไปเรื่อยๆ ที่นี่ 
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                </div>-->
+                <br />
+                <div id="sidebar" class="leaflet-sidebar collapsed">
+                <!-- Nav tabs -->
+                <div class="leaflet-sidebar-tabs">
+                    <ul role="tablist">
+                    <!-- top aligned tabs -->
+                    <li>
+                        <a href="#home" role="tab"><i class="fa fa-bars"></i></a>
+                    </li>
+                    </ul>
+
+                    <ul role="tablist">
+                    <!-- bottom aligned tabs -->
+                    </ul>
+                </div>
+
+                <!-- Tab panes -->
+                <div class="leaflet-sidebar-content">
+                    <div class="leaflet-sidebar-pane" id="home">
+                    <h1 class="leaflet-sidebar-header">
+                        กล้อง AI
+                        <div class="leaflet-sidebar-close">
+                        <i class="fa fa-caret-left"></i>
+                        </div>
+                    </h1>
+                    <p>A responsive sidebar for mapping libraries</p>
+                    </div>
+                </div>
+                </div>
+                <div class="d-flex align-items-center mb-4">
+                    <form method="get" class="form-inline mb-0">
+                        <label for="id_plate_part1" class="mr-2">ค้นหาทะเบียนรถ:</label>
+                        <input type="text" name="plate_part1" id="id_plate_part1" class="form-control mr-2" placeholder="กก" style="width: 60px;">
+                        <span class="mr-2">-</span>
+                        <input type="text" name="plate_part2" id="id_plate_part2" class="form-control mr-2" placeholder="1111" style="width: 80px;">
+                        <span class="mr-2">-</span>
+                        <input type="text" name="plate_part3" id="id_plate_part3" class="form-control mr-2" placeholder="จังหวัด" style="width: 100px;">
+                        <button type="submit" class="btn btn-primary ml-3">ค้นหา</button>
+                    </form>
+                    {% if message %}
+                        <div class="alert alert-warning mb-0 ml-3">{{ message }}</div>
+                    {% endif %}
+                </div>  
+
+                {% if camera_data %}
+                    <div class="card shadow mb-4">
+                        <div class="card-body">
+                            <h2 class="text-center mb-4">ผลการค้นหาสำหรับทะเบียนรถ: {{ form.cleaned_data.plate_part1 }}-{{ form.cleaned_data.plate_part2 }}-{{ form.cleaned_data.plate_part3 }}</h2>
+                            <div class="table-responsive mx-auto">
+                                <table class="table table-bordered table-hover table-striped">
+                                    <thead class="thead-dark">
+                                        <tr>
+                                            <th>วันที่และเวลา</th>
+                                            <th>จุดตรวจ</th>
+                                            <th>ทะเบียนรถ</th>
+                                            <th>ประเภท</th>
+                                            <th>สี</th>
+                                            <th>พิกัด (Latitude, Longitude)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for record in camera_data %}
+                                            <tr>
+                                                <td>{{ record.timestamp }}</td>
+                                                <td>{{ record.checkpoint_id }}</td>
+                                                <td>{{ record.license_plate }}</td>
+                                                <td>{{ record.vehicle_type }}</td>
+                                                <td>{{ record.vehicle_color }}</td>
+                                                <td>{{ record.latitude }}, {{ record.longitude }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if conflicting_results %}
+                    <div class="card shadow mb-4">
+                        <div class="card-body">
+                            <h2 class="text-center mb-4">ข้อมูลทะเบียนรถเดียวกัน</h2>
+                            <div class="table-responsive mx-auto">
+                                <table class="table table-bordered table-hover table-striped">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>ประเภท</th>
+                                            <th>สี</th>
+                                            <th>จำนวนการบันทึก</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for conflict in conflicting_results %}
+                                            <tr>
+                                                <td>{{ conflict.vehicle_type }}</td>
+                                                <td>{{ conflict.vehicle_color }}</td>
+                                                <td>{{ conflict.count }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+
+                <img id="yourImage" src="{% static '/img/edge-arrow-marker.png' %}" alt="Your Image" style="display: none;">
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-zoom/1.1.1/chartjs-plugin-zoom.min.js"></script>
+                <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+                <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+                <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+                <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+                
+                <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+                <script>
+                    var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© OpenStreetMap'
+                    });
+
+                    var osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '© OpenStreetMap contributors, Tiles style by Humanitarian OpenStreetMap Team hosted by OpenStreetMap France'
+                    });
+
+                    var openTopoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)'
+                    });
+
+                    var satelliteMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        maxZoom: 19,
+                        attribution: 'Esri, Maxar, GeoIQ, OpenStreetMap contributors'
+                    });
+
+                    // Create the map and set the view
+                    var map = L.map('map', {
+                        center: [14.063, 102.899], // พิกัดเริ่มต้น
+                        zoom: 13,                  // ระดับการซูมเริ่มต้น
+                        layers: [satelliteMap],     // ใช้แผนที่ดาวเทียมเป็นชั้นเริ่มต้น
+                        fullscreenControl: true,    // เปิดใช้งาน Fullscreen control
+                        fullscreenControlOptions: { // ตั้งค่าการควบคุมเพิ่มเติม
+                            position: 'topleft'     // ตำแหน่งของปุ่ม Fullscreen
+                        }
+                    });
+                    // เพิ่มการควบคุมสเกลบนแผนที่
+                    L.control.scale().addTo(map);
+
+
+                    var baseLayers = {
+                        "OpenStreetMap": osm,
+                        "OpenStreetMap HOT": osmHOT,
+                        "OpenTopoMap": openTopoMap,
+                        "Satellite Map": satelliteMap
+                    };
+                    // Add control for base layers and overlay maps
+                    L.control.layers(baseLayers).addTo(map);
+
+                    function updateMarkers() {
+                        // Use the camera_data passed from Django instead of fetching it
+                        const data = {{ camera_data|safe }};
+                    
+                        // Clear all old markers from the map
+                        map.eachLayer(existingMarker => {
+                            if (existingMarker instanceof L.Marker) {
+                                map.removeLayer(existingMarker);
+                            }
+                        });
+                    
+                        // Add new markers from camera_data
+                        data.forEach(location => {
+                            const icon = L.icon({
+                                iconUrl: "{% static 'img/camera.png' %}",  // Specify the icon image URL
+                                iconSize: [32, 32], // Icon size
+                                iconAnchor: [16, 32], // Anchor point (center bottom)
+                                popupAnchor: [0, -32] // Popup position
+                            });
+                    
+                            const marker = L.marker([location.latitude, location.longitude], { icon: icon }).addTo(map);
+                    
+                            // Bind popup with camera data
+                            marker.bindPopup(`
+                                กล้องที่จุดตรวจ: ${location.checkpoint_id}<br>
+                                เวลาบันทึกภาพ: ${location.timestamp}<br>
+                            `).openPopup();
+                    
+                            marker.on('mouseover', function (e) {
+                                marker.openPopup();
+                            });
+                    
+                            marker.on('click', function () {
+                                // Create new panel content
+                                const panelContent = {
+                                    id: 'userinfo',  // Use this ID to check for an existing panel
+                                    tab: '<i class="fa fa-gear"></i>',
+                                    pane: `
+                                        <div class="camera-info">
+                                            <p class="camera-property">กล้องที่จุดตรวจ: ${location.checkpoint_id}</p>
+                                            <p class="camera-property">เวลาบันทึกภาพ: ${location.timestamp}</p>
+                                            <p class="camera-property">ละติจูด: ${location.latitude}</p>
+                                            <p class="camera-property">ลองจิจูด: ${location.longitude}</p>
+                                        </div>
+                                    `,
+                                    title: 'Camera Data',
+                                    position: 'bottom'
+                                };
+                    
+                                // Remove existing panel if present
+                                if ('userinfo') {
+                                    sidebar.removePanel('userinfo');
+                                }
+                    
+                                // Add and open new panel
+                                sidebar.addPanel(panelContent);
+                                sidebar.open('userinfo');
+                            });
+                    
+                            // Close panel on map click
+                            map.on('click', function () {
+                                sidebar.close('userinfo');
+                            });
+                    
+                            // Prevent clicks in the sidebar from affecting the map
+                            L.DomEvent.on(sidebar.getContainer(), 'click', function (e) {
+                                L.DomEvent.stopPropagation(e);
+                            });
+                        });
+                    }
+                    
+                
+                
+                    var notificationControl = L.control.notifications({
+                        position: 'bottomright'
+                    }).addTo(map);
+
+                    L.control.mousePosition().addTo(map);
+
+                    var edgeMarkerLayer = L.edgeMarker({
+                        findEdge : function(map){return L.bounds([200,0],map.getSize());},
+                        icon: L.icon({ // style markers
+                            iconUrl : document.getElementById('yourImage').src,
+                            clickable: true,
+                            iconSize: [18,18],
+                            iconAnchor: [10, 10]
+                        })
+                    }).addTo(map);
+
+                    var panelContent;  // ประกาศตัวแปรนอกส่วนของ click event
+                    var sidebar = L.control.sidebar({
+                        autopan: true,       // whether to maintain the centered map point when opening the sidebar
+                        closeButton: true,    // whether t add a close button to the panes
+                        container: 'sidebar', // the DOM container or #ID of a predefined sidebar container that should be used
+                        position: 'left',     // left or right
+                    }).addTo(map);
+                    map.addControl(sidebar);
+                    
+                    updateMarkers();
+
+                    function updateTable() {
+                        fetch("{% url 'camera_data' %}")
+                            .then(response => response.json())
+                            .then(data => {
+                                const cameraTable = document.getElementById('camera-table');
+                                const tbody = cameraTable.querySelector('tbody');
+                                tbody.innerHTML = ''; // Clear the table content
+                    
+                                data.camera_data.forEach((camera, index) => {
+                                    const row = document.createElement('tr');
+                                    row.innerHTML = `
+                                        <td>${index + 1}</td>
+                                        <td>${camera.license_plate}</td>
+                                        <td>${camera.checkpoint_id}</td>
+                                        <td>${camera.timestamp}</td>
+                                        <td>${camera.vehicle_type}</td>
+                                        <td>${camera.vehicle_color}</td>
+                                        <td>${camera.latitude}</td>
+                                        <td>${camera.longitude}</td>
+                                    `;
+                                    tbody.appendChild(row);
+                                });
+                            })
+                            .catch(error => {
+                                console.error('Error fetching camera data:', error);
+                            });
+                    }
+                    updateTable();
+            </script>
+        </div>
+    </div>
+</body>
+
+{% endblock %}

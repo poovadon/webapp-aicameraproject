@@ -1,0 +1,333 @@
+{% extends "base.html" %}{% load static %}
+
+{% block title %}
+    <title>Home</title>
+    
+{% endblock %}
+
+{% block content %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        .slider_section2 .row2 {
+            -webkit-box-align: center;
+            -ms-flex-align: center;
+            align-items: center;
+        }
+    </style>
+    <body onload="activeShowPage()">
+    <div class="lds-dual-ring" id="preLoader"></div>
+    <div id="pageContent" class="content fadecontent">
+      <section class="slider_section2 long_section" style="background-color: #a5e1e1;">
+        <div id="customCarousel" class="carousel slide" data-ride="carousel">
+          <div class="carousel-inner">
+            <div class="carousel-item active">
+              <div class="container "style="max-width: 1400px">
+                <div class="row d-flex align-items-center" style="margin-top: 50px;">
+                  <div class="col-md-20">
+                    <div class="detail-box">
+                      <h1 style="text-align: center;">
+                      โครงการวิจัยการพัฒนาระบบกล้องปัญญาประดิษฐ์สำหรับการเฝ้าตรวจชายแดนในพื้นที่กองกำลังนเรศวร<br>
+                        A RESEARCH AND DEVELOPMENT OF AI CAMERA BORDER SURVEILLANCE FOR NARESUAN TASKFORCE
+                        
+                      </h1>
+                      <p>
+                        คำอธิบายเพิ่มเติม
+                      </p>
+                      <div class="btn-box">
+                        <a href="{% url 'about' %}" class="btn1">
+                          About Us
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-7">
+                    <div class="img-box">
+                      <img src="images/slider-img.png" alt="">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="carousel-item">
+              <div class="container "style="max-width: 1400px">
+                <div class="row d-flex align-items-center" style="margin-top: 50px;">
+                  <div class="col-md-20">
+                    <div class="detail-box">
+                      <h1>
+                        รายละเอียดตามขอเสนอโครงการวิจัยความเป็นมาและความสำคัญของปัญหา
+                      </h1>
+                      <p style="text-indent: 40px;">
+                      เครื่องมือเฝ้าตรวจประเภทกล้องที่มีใช้งานในระบบเฝ้าตรวจชายแดนปัจจุบันมาจากการจัดหาจากต่างประเทศ
+                      มีประสิทธิภาพในการเฝ้าตรวจ แต่ด้วยราคามูลค่าการจัดหาที่ค่อนข้างสูงทำให้ไม่สามารถจัดหาได้เพียงพอกับความต้องการ
+                      ใช้งานตามขนาดของพื้นที่ชายแดนของประเทศได้ทั้งหมด นอกจากนี้ยังมีข้อจำกัดในเรื่องการใช้พลังงานไฟฟ้า ซึ่งเป็นข้อจำกัด
+                      ของพื้นที่ชายแดน หรือการใช้พลังงานจากแบตเตอรี่อาจจะไม่มีความเสถียรในการจ่ายกระแส ซึ่งจะส่งผลกระทบต่อความ
+                      ชำรุดเสียหายของอุปกรณ์
+                      </p>
+                      <p style="text-indent: 40px;">
+                      แม้ว่าเครื่องมือเฝ้าตรวจประเภทกล้องชนิดต่างๆ เป็นเครื่องมือที่มีความน่าเชื่อถือของข่าวสารสูงมาก มักถูกนำมาใช้ในการเฝ้าตรวจ การรักษาความปลอดภัยสถานที่ อย่างไรก็ตาม จำเป็นต้องใช้เจ้าหน้าที่ในการวิเคราะห์ข้อมูลจากกล้องอีกส่วนหนึ่ง และด้วยการบันทึกภาพต่อเนื่องเป็นเวลานานจึงมีข้อมูลที่ต้องวิเคราะห์ในปริมาณที่มาก เป็นภาระงานที่ต้องใช้ความแม่นยำในการวิเคราะห์และประมวลผล
+                      </p>
+                      <p style="text-indent: 40px;">
+                      ดังนั้นหน่วยจึงพิจารณาแนวทางในการวิจัยพัฒนาสำหรับเครื่องมือเฝ้าตรวจประเภทกล้องตรวจการณ์ที่มีความเหมาะสมกับสภาพพื้นที่ และมีความฉลาดประมวลผลด้วยกระบวนการ Machine Learning มาใช้เพื่อวิเคราะห์ข้อมูลภาพที่ได้จากกล้องตรวจการณ์ เพื่อแยกแยะประเภทของยานพาหนะ ยี่ห้อ รุ่น สี ของยานพาหนะ และอ่านป้ายทะเบียนรถยนต์ที่ผ่านจุดเฝ้าตรวจ
+  ให้บันทึกภาพไว้ ณ สถานเฝ้าตรวจ ส่งข้อมูลกลับเฉพาะข้อความผลการเฝ้าตรวจ เพื่อความรวดเร็วในการแจ้งเตือน ให้ได้ข้อมูลที่ครอบคลุมพื้นที่เฝ้าระวัง ลดค่าใช้จ่าย และลดภาระงานของเจ้าหน้าที่
+                      </p>
+                      <div class="btn-box">
+                        <a href="{% url 'about' %}" class="btn1">
+                          About Us
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="carousel-item">
+              <div class="container ">
+                <div class="row d-flex align-items-center" style="margin-top: 50px;">
+                  <div class="col-md-5">
+                    <div class="detail-box">
+                      <h1>
+                        แนวคิด <br>
+                        กล้องปัญญาประดิษฐ์
+                      </h1>
+                      <p>
+                        คำอธิบายเพิ่มเติม
+                      </p>
+                      <div class="btn-box">
+                        <a href="{% url 'about' %}" class="btn1">
+                          About Us
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-7">
+                    <div class="img-box">
+                      <img src="{% static 'img/aicamera.jpg' %}" alt=""style="width: 130%;">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ol class="carousel-indicators">
+            <li data-target="#customCarousel" data-slide-to="0" class="active"></li>
+            <li data-target="#customCarousel" data-slide-to="1"></li>
+            <li data-target="#customCarousel" data-slide-to="2"></li>
+          </ol>
+        </div>
+      </section>
+      <!-- end slider section -->
+      <section class="furniture_section layout_padding">
+      <div class="container">
+        <div class="heading_container">
+          <h2>
+            รายการอุปกรณ์
+          </h2>
+          <p>
+            คำอธิบาย
+          </p>
+        </div>
+        <div class="row">
+          <div class="col-md-6 col-lg-4">
+            <div class="box">
+              <div class="img-box">
+                <img src="images/f1.png" alt="รูปที่ 1">
+              </div>
+              <div class="detail-box">
+                <h5>
+                  ชื่ออุปกรณ์ที่ 1
+                </h5>
+                <div class="price_box">
+                  <h6 class="price_heading">
+                    ลายละเอียดข้อมูล
+                  </h6>
+              
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="box">
+              <div class="img-box">
+                <img src="images/f2.png" alt="รูปที่ 2">
+              </div>
+              <div class="detail-box">
+                <h5>
+                  ชื่ออุปกรณ์ที่ 2
+                </h5>
+                <div class="price_box">
+                  <h6 class="price_heading">
+                      ลายละเอียดข้อมูล
+                  </h6>
+                  
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="box">
+              <div class="img-box">
+                <img src="images/f3.png" alt="รูปที่ 3">
+              </div>
+              <div class="detail-box">
+                <h5>
+                  ชื่ออุปกรณ์ที่ 3
+                </h5>
+                <div class="price_box">
+                  <h6 class="price_heading">
+                    ลายละเอียดข้อมูล
+                  </h6>
+                  
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="box">
+              <div class="img-box">
+                <img src="images/f4.png" alt="รูปที่ 4">
+              </div>
+              <div class="detail-box">
+                <h5>
+                  ชื่ออุปกรณ์ที่ 4
+                </h5>
+                <div class="price_box">
+                  <h6 class="price_heading">
+                    ลายละเอียดข้อมูล
+                  </h6>
+                  
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="box">
+              <div class="img-box">
+                <img src="images/f5.png" alt="รูปที่ 5">
+              </div>
+              <div class="detail-box">
+                <h5>
+                  ชื่ออุปกรณ์ที่ 5
+                </h5>
+                <div class="price_box">
+                  <h6 class="price_heading">
+                    ลายละเอียดข้อมูล
+                  </h6>
+                  
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-4">
+            <div class="box">
+              <div class="img-box">
+                <img src="images/f6.png" alt="รูปที่ 6">
+              </div>
+              <div class="detail-box">
+                <h5>
+                  ชื่ออุปกรณ์ที่ 6
+                </h5>
+                <div class="price_box">
+                  <h6 class="price_heading">
+                    ลายละเอียดข้อมูล
+                  </h6>
+                  
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="client_section layout_padding-bottom long_section ">
+      <div class="container" style="background-color: transparent;">
+        <div class="heading_container">
+          <h2>
+            ผู้จัดทำโครงการ
+          </h2>
+        </div>
+        <div id="carouselExample2Controls" class="carousel slide" data-ride="carousel">
+          <div class="carousel-inner">
+            <div class="carousel-item active">
+              <div class="row">
+                <div class="col-md-11 col-lg-10 mx-auto">
+                  <div class="box">
+                    <div class="img-box">
+                      <img src="images/client.jpg" alt="" />
+                    </div>
+                    <div class="detail-box">
+                      <div class="name">
+                        <i class="fa fa-quote-left" aria-hidden="true"></i>
+                        <h6>
+                          ชื่อ-นามสกุล
+                        </h6>
+                      </div>
+                      <p>
+                        คำอธิบาย
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="carousel-item">
+              <div class="row">
+                <div class="col-md-11 col-lg-10 mx-auto">
+                  <div class="box">
+                    <div class="img-box">
+                      <img src="images/client.jpg" alt="" />
+                    </div>
+                    <div class="detail-box">
+                      <div class="name">
+                        <i class="fa fa-quote-left" aria-hidden="true"></i>
+                        <h6>
+                          ชื่อ-นามสกุล
+                        </h6>
+                      </div>
+                      <p>
+                        คำอธิบาย
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="carousel-item">
+              <div class="row">
+                <div class="col-md-11 col-lg-10 mx-auto">
+                  <div class="box">
+                    <div class="img-box">
+                      <img src="images/client.jpg" alt="" />
+                    </div>
+                    <div class="detail-box">
+                      <div class="name">
+                        <i class="fa fa-quote-left" aria-hidden="true"></i>
+                        <h6>
+                          ชื่อ-นามสกุล
+                        </h6>
+                      </div>
+                      <p>
+                        คำอธิบาย
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="carousel_btn-container">
+            <a class="carousel-control-prev" href="#carouselExample2Controls" role="button" data-slide="prev">
+              <i class="fa fa-long-arrow-left" aria-hidden="true"></i>
+              <span class="sr-only">Previous</span>
+            </a>
+            <a class="carousel-control-next" href="#carouselExample2Controls" role="button" data-slide="next">
+              <i class="fa fa-long-arrow-right" aria-hidden="true"></i>
+              <span class="sr-only">Next</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+    </div>
+  </div>
+  </body>
+{% endblock %}
