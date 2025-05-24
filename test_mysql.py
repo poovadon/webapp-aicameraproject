@@ -78,8 +78,8 @@ simulation_data = simulation_data.merge(checkpoints, on='checkpoint_id', how='le
 simulation_data.to_csv("vehicle_lpr_simulation_data.csv", index=False)
 
 # ข้อมูลการเชื่อมต่อฐานข้อมูล MySQL
-db_user = 'amic'
-db_password = quote_plus('Amic@8836688366')
+db_user = 'your_user'
+db_password = quote_plus('your_password')
 db_host = 'localhost'
 db_port = '3306'
 db_name = 'camera_database'
